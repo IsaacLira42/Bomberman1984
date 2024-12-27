@@ -2,13 +2,13 @@
 
 # **Bomberman 1984 - MIPS Assembly Edition**
 
-Este projeto é uma recriação do clássico jogo **Bomberman (1984)**, desenvolvido em **Assembly MIPS** usando o simulador **MARS**. Criado por **Isaac Lira** e **Luca Vinícius**, este projeto combina aprendizado e diversão ao recriar a essência de um dos jogos mais icônicos da história dos videogames.
+Este projeto é uma recriação do clássico jogo **Bomberman (1984)**, desenvolvido em **Assembly MIPS** usando o simulador **MARS**. Criado por **Isaac Lira** e **Lucas Vinícius**, este projeto combina aprendizado e diversão ao recriar a essência de um dos jogos mais icônicos da história dos videogames.
 
 ## **Características do Jogo**
 
 -   🎮 **Jogabilidade retrô** inspirada no original de 1984.
 -   💣 **Explosões e estratégia**: posicione bombas para abrir caminhos e eliminar inimigos.
--   🧱 **Labirinto dinâmico**: cenário composto por blocos fixos e destrutíveis.
+-   🧱  **Labirinto dinâmico**: cenário composto por blocos fixos e destrutíveis.
 -   🕹️ **Controle simples**: movimentação e ações configuradas no teclado.
 
 ## **Objetivos**
@@ -23,7 +23,7 @@ Este projeto é uma forma de aprimorar habilidades em Assembly e explorar a lóg
 
 -   Controle preciso do fluxo do programa e da movimentação no labirinto.
 -   Gestão de eventos como explosões e colisões com inimigos.
--   Implementação de uma interface gráfica simples diretamente no console do MARS.
+-   Implementação de uma interface gráfica simples usando a ferramenta **Bitmap Display** do MARS.
 
 ## **Como Executar**
 
