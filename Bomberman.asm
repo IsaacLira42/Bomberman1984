@@ -20,7 +20,7 @@ main:
 
 desenho:
 	# Verificar fim do desenho
-	beq $16, $0, fim
+	beq $16, $0, limitesDoMapa
 	
 	# Escolher cor atual
     	beq $15, $0, useVerdeClaro
@@ -62,6 +62,82 @@ pintar:
 	xor $15, $15, 1      # Alterna cor
 	
     	j desenho
+#####################################################################################
+limitesDoMapa:
+	# Reiniciando Variáveis de controle
+	lui $8, 0x1001    # Primeira posição do vetor
+	addi $25, $0, 16  # Limite de blocos horizontais
+	
+blocosHorizontaisCima:
+	beq $25, $0, blocosVerticais
+	jal blocosCinzas  # Chamada da função
+	addi $25, $25, -1
+	j blocosHorizontaisCima
+	
+blocosVerticais:
+	addi $25, $0, 16  # Reiniciando limite de blocos horizontais
+	addi $24, $0, 6
+	loopDesenharBlocosVerticais:
+		beq $24, $0, blocosHorizontaisBaixo
+		addi $8, $8, 3584
+		jal blocosCinzas
+		addi $8, $8, 448
+		jal blocosCinzas
+		addi $24, $24, -1
+		j loopDesenharBlocosVerticais
+
+blocosHorizontaisBaixo:
+	addi $25, $0, 16  # Reiniciando limite de blocos horizontais
+	addi $8, $8, 3584
+	loop23132141:
+		beq $25, $0, blocosVerticais
+		jal blocosCinzas  # Chamada da função
+		addi $25, $25, -1
+		j loop23132141
+
 fim:
 	addi $2, $0, 10
 	syscall
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+#####################################################################################
+# Função que desenha um quadrado do limite do mapa
+# Sujos: $8, $9, $10, $11
+# Saida: ---
+blocosCinzas:
+	addi $10, $0, 0   # Contador de colunas
+	addi $11, $0, 8   # Limite de Colunas
+
+loopDesenharBlocosCinzas:
+	beq $10, $11, fimBlocosCinzas
+
+	lui $9, 0x0031
+	ori $9, $9, 0x3031   # Iniciando com a cor Cinza Escuro
+	
+	# Todos são pintados com a cor cinza Escuro
+	sw $9, 0($8)     # 1
+	sw $9, 512($8)   # 2
+	sw $9, 1024($8)  # 3
+	sw $9, 1536($8)  # 4
+	sw $9, 2048($8)  # 5
+	sw $9, 2560($8)  # 6
+	sw $9, 3072($8)  # 7
+	sw $9, 3584($8)  # 8
+	
+	addi $10, $10, 1  # Incrementa contador de colunas
+	addi $8, $8, 4    # Proxima posição do vetor
+	
+	j loopDesenharBlocosCinzas
+	
+fimBlocosCinzas:
+	jr $31
