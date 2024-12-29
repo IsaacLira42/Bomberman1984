@@ -1,0 +1,23 @@
+def dividir_cor_hexadecimal():
+    """
+    Permite ao usuário digitar uma cor hexadecimal e divide em partes alta e baixa.
+    """
+    cor_hex = input("Digite o código hexadecimal da cor (ex: #828F9E): ").strip()
+    
+    # Remove o símbolo '#' se estiver presente
+    cor_hex = cor_hex.lstrip('#')
+    
+    # Certifica-se de que a cor tem exatamente 6 caracteres
+    if len(cor_hex) != 6:
+        raise ValueError("A cor hexadecimal deve ter exatamente 6 caracteres.")
+    
+    # Converte a string em inteiro base 16 e divide em alta e baixa
+    cor_inteira = int(cor_hex, 16)
+    parte_alta = (cor_inteira >> 16) & 0xFFFF  # 16 bits mais significativos
+    parte_baixa = cor_inteira & 0xFFFF         # 16 bits menos significativos
+    
+    print(f"Parte alta: 0x{parte_alta:04X}")
+    print(f"Parte baixa: 0x{parte_baixa:04X}")
+
+# Executar o programa
+dividir_cor_hexadecimal()
