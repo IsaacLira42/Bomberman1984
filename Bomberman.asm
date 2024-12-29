@@ -62,7 +62,7 @@ pintar:
 	xor $15, $15, 1      # Alterna cor
 	
     	j desenho
-#####################################################################################
+
 limitesDoMapa:
 	# Reiniciando Variáveis de controle
 	lui $8, 0x1001    # Primeira posição do vetor
@@ -94,7 +94,7 @@ blocosHorizontaisBaixo:
 		jal blocosCinzas  # Chamada da função
 		addi $25, $25, -1
 		j loop23132141
-###################################################################################
+
 contornoPretoDosBlocosLimites:
 		lui $8, 0x1001       # Carrega os 16 bits superiores (0x1001) no registrador $8
 		ori $8, $8, 0x0E20   # Combina os 16 bits inferiores (0x0E1C) com os já existentes em $8
@@ -116,16 +116,39 @@ contornoPretoDosBlocosLimites:
 			j loopContornoHorizontal
 	
 		loopContornoVertical:
-			beq $24, $0, fim
+			beq $24, $0, obstaculos
 			addi $24, $24, -1
 			sw $9, 0($8)
 			sw $9, -452($8)
 			addi $8, $8, 512
 			j loopContornoVertical
+####################################################################################	
+
+obstaculos:
+	lui $8, 0x1001
+	ori $8, $8, 0x0040
+	addi $8, $8, 28672
+	addi $24, $0, 3  # quantidade de linhas
+	
+	loopzaoDesenharObstaculos:
+		beq $24, $0, fim
+		addi $24, $24, -1
+		addi $8, $8, -8192
+		addi $25, $0, 7  # Limite de obstaculos em uma linha
 		
-		fim:
-			addi $2, $0, 10
-			syscall
+		loopzinhoDesenharObstaculos:
+			beq $25, $0, correcao
+			addi $25, $25, -1
+			jal blocosCinzas
+			addi $8, $8, 32
+			j loopzinhoDesenharObstaculos
+		correcao:
+			addi $8, $8, -448
+			j loopzaoDesenharObstaculos
+
+fim:
+	addi $2, $0, 10
+	syscall
 			
 			
 			
