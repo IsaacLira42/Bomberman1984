@@ -206,7 +206,7 @@ fimBlocosCinzas:
 copiaCenario:
 	# Reiniciando Variáveis de controle
 	lui $8, 0x1001    # Primeira posição do vetor
-	addi $10, $0, 2048
+	addi $10, $0, 16384
 	loopCopiaCenario:
 		beq $10, $0, fimCopiaCenario
 		addi $10, $10, -1
