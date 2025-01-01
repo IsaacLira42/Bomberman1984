@@ -135,24 +135,27 @@ contornoPretoDosBlocosLimites:
 obstaculos:
 	lui $8, 0x1001
 	ori $8, $8, 0x0040
-	addi $8, $8, 61440
+	addi $8, $8, 61472
 	
-	addi $24, $0, 7  # quantidade de linhas
+	addi $12, $0, 0
+	
+	addi $24, $0, 3  # quantidade de linhas
 	
 	loopzaoDesenharObstaculos:
 		beq $24, $0, fimDoCenarioEstatico
+		
 		addi $24, $24, -1
-		addi $8, $8, -8192
-		addi $25, $0, 7  # Limite de obstaculos em uma linha
+		addi $8, $8, -16384
+		addi $25, $0, 3  # Limite de obstaculos em uma linha
 		
 		loopzinhoDesenharObstaculos:
 			beq $25, $0, correcao
 			addi $25, $25, -1
 			jal blocosCinzas
-			addi $8, $8, 32
+			addi $8, $8, 64
 			j loopzinhoDesenharObstaculos
 		correcao:
-			addi $8, $8, -448
+			addi $8, $8, -384
 			j loopzaoDesenharObstaculos
 #####################################################################################
 fimDoCenarioEstatico:
@@ -173,6 +176,8 @@ fim:
 blocosCinzas:
 	addi $10, $0, 0   # Contador de colunas
 	addi $11, $0, 8   # Limite de Colunas
+	bne $12, $0, loopDesenharBlocosCinzas
+	addi $11, $0, 16
 
 loopDesenharBlocosCinzas:
 	beq $10, $11, fimBlocosCinzas
@@ -190,6 +195,18 @@ loopDesenharBlocosCinzas:
 	sw $9, 3072($8)    # 7
 	sw $9, 3584($8)    # 8
 	
+	bne $12, $0, pro8poo8
+	
+	sw $9, 4096($8)    # 1
+	sw $9, 4608($8)    # 2
+	sw $9, 5120($8)    # 3
+	sw $9, 5632($8)    # 4
+	sw $9, 6144($8)    # 5
+	sw $9, 6656($8)    # 6
+	sw $9, 7168($8)    # 7
+	sw $9, 7680($8)    # 8
+	
+pro8poo8:
 	addi $10, $10, 1  # Incrementa contador de colunas
 	addi $8, $8, 4    # Proxima posição do vetor
 	
