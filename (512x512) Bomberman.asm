@@ -218,11 +218,17 @@ loopPrincipal:
 		lw $8, 4($8)   # Posição
 		
 		addi $11, $0, 1   # Direção Norte (Cima)
-		jal verificarImpactoComOsObstaculos
+		jal verificarImpactoComOsObstaculos    # Tambem é usado para moviemntar o personagem
 		
 		beq $12, $0, loopPrincipal   # Devera ser substituido pelo movimento dos Bots
 		
 		jal criarPersonagem
+		
+		move $25, $8      # Copia da posição do personagem
+		addi $8, $8, 4096   # Bloco abaixo
+		jal preencherBlocoComUmaCor    # apagar Rastros Do Personagem
+		move $8, $25      # Recupera a posiçãp original do personagem
+		
 		jal AtualizarMovimentoDoPlayer
 		
 		j loopPrincipal   # Devera ser substituido pelo movimento dos Bots
@@ -237,6 +243,12 @@ loopPrincipal:
 		beq $12, $0, loopPrincipal   # Devera ser substituido pelo movimento dos Bots
 		
 		jal criarPersonagem
+		
+		move $25, $8      # Copia da posição do personagem
+		addi $8, $8, -4096   # Bloco acima
+		jal preencherBlocoComUmaCor    # apagar Rastros Do Personagem
+		move $8, $25      # Recupera a posiçãp original do personagem
+		
 		jal AtualizarMovimentoDoPlayer
 		
 		j loopPrincipal
@@ -253,6 +265,12 @@ loopPrincipal:
 		beq $12, $0, loopPrincipal   # Devera ser substituido pelo movimento dos Bots
 		
 		jal criarPersonagem
+		
+		move $25, $8      # Copia da posição do personagem
+		addi $8, $8, 32   # Bloco direito
+		jal preencherBlocoComUmaCor    # apagar Rastros Do Personagem
+		move $8, $25      # Recupera a posiçãp original do personagem
+		
 		jal AtualizarMovimentoDoPlayer
 		
 		j loopPrincipal
@@ -269,6 +287,12 @@ loopPrincipal:
 		beq $12, $0, loopPrincipal   # Devera ser substituido pelo movimento dos Bots
 		
 		jal criarPersonagem
+		
+		move $25, $8      # Copia da posição do personagem
+		addi $8, $8, -32   # Bloco esquerdo
+		jal preencherBlocoComUmaCor    # apagar Rastros Do Personagem
+		move $8, $25      # Recupera a posiçãp original do personagem
+		
 		jal AtualizarMovimentoDoPlayer
 		
 		j loopPrincipal
@@ -607,4 +631,36 @@ verificarImpactoComOsObstaculos:
 	
 	pararMovimento:
 		move $9, $24       # Recupera a cor
+		jr $31
+		
+#####################################################################################
+# Função que preenche um quadrado 8x8 unidade graficas com uma cor expecificada antes da chamada da função
+# Sujos: $8, $9, $10
+# Saida: 
+# O registrador $8 contem a posição atual do bot ou player, que sera recuperado depois do retorno da função.
+
+preencherBlocoComUmaCor:
+	addi $10, $0, 8   # Limite de colunas
+	
+	lw $9, 65536($8)   # Cor usada para preencher quadrado
+	
+	loopPintarQuadradoCompleto:
+		beq $10, $0, fimPreencherBlocoComUmaCor
+		addi $10, $10, -1  # Decrementa a qtd de colunas não preenchidas
+		
+		sw $9, 0($8)
+		sw $9, 512($8)
+		sw $9, 1024($8)
+		sw $9, 1536($8)
+		sw $9, 2048($8)
+		sw $9, 2560($8)
+		sw $9, 3072($8)
+		sw $9, 3584($8)
+		
+		addi $8, $8, 4
+		
+		j loopPintarQuadradoCompleto
+	
+	
+	fimPreencherBlocoComUmaCor:
 		jr $31
