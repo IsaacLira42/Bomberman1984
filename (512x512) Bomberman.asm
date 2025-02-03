@@ -109,8 +109,10 @@ contornoPretoDosBlocosLimites:
 			addi $25, $25, -1
 			# Cima
 			sw $9, 0($8)
+			#sw $9, 65536($8) # Copia fora do display
 			# Baixo
 			sw $9, 57856($8)
+			#sw $9, 123392($8) # Copia fora do display
 			
 			addi $8, $8, 4  # Proxima posição do vetor
 			j loopContornoHorizontal
@@ -157,46 +159,22 @@ obstaculos:
 			j loopzaoDesenharObstaculos
 #####################################################################################
 fimDoCenarioEstatico:
-	jal copiaCenario  # Chamada da função que cria uma copia do cenário fora do display visivel
+	jal copiaCenario #Chamada da função que cria uma copia do cenário fora do display
 	
 	jal iniciarVariaveisDosPersonagens
-	
-	### Personagem Jogavel - Azul
-	lui $8, 0x1002   # Primeira posição do "array" para as variaveis
-	lw $10, 16($8) # Direção 
-	lw $9, 12($8)  # Cor
-	lw $8, 4($8)   # Posição
-	jal criarPersonagem
-	
-	### Bot 1 - Vermelho
-	lui $8, 0x1002   # Primeira posição do "array" para as variaveis
-	lw $10, 36($8) # Direção
-	lw $9, 32($8)  # Cor
-	lw $8, 24($8)  # Posição
-	jal criarPersonagem
-	
-	### Bot 2 - Amarelo
-	lui $8, 0x1002   # Primeira posição do "array" para as variaveis
-	lw $10, 56($8) # Direção
-	lw $9, 52($8)  # Cor
-	lw $8, 44($8)  # Posição
-	jal criarPersonagem
-	
-	### Bot 3 - Rosa
-	lui $8, 0x1002   # Primeira posição do "array" para as variaveis
-	lw $10, 76($8) # Direção
-	lw $9, 72($8)  # Cor
-	lw $8, 64($8)  # Posição
-	jal criarPersonagem
-	
-	lui $21, 0xffff   # não sei o que é, não sei para que serve, so sei que não sei assembly, e so funciona com isso.
-	
-loopPrincipal:
-	### Personagem Jogavel - Azul
-	lui $8, 0x1002   # Primeira posição do "array" para as variaveis
 
+
+	lui $21, 0xffff   # não sei o que é, não sei para que serve, so sei que não sei assembly, e so funciona com isso.
+loopPrincipal:
+	lui $8, 0x1002    # Primeira posição do "array" para as variaveis
+	lw $25, 0($8)     # Pegar ainformação de se esta ou não vivo
+	beq $25, $0, fim   # verificar se o player morreu
+	# Else (Ta vivo):
+	
+	lw $8, 4($8)      # Conteudo do 4($8) (Posição)
+	
 	lw $22, 0($21)             # Lê o valor da tecla pressionada em $22 (endereço de teclas).
-	beq $22, $0, loopPrincipal # Se nenhuma tecla foi pressionada, pula para o próximo ciclo do loop.
+	beq $22, $0, fimMovimentoPlayer # Se nenhuma tecla foi pressionada, pula para o próximo ciclo do loop.
 	
 	lw $23, 4($21)             # Lê o próximo valor, provavelmente para verificar se a tecla corresponde ao movimento.
 	
@@ -210,93 +188,94 @@ loopPrincipal:
 	addi $24, $0, 'w'          # Carrega 'w' no $24
 	beq $23, $24, cima
 	
-	j loopPrincipal            # Volta ao início do loop
+	j fimMovimentoPlayer            # Volta ao início do loop
+	
 
 	cima:
-		lw $10, 16($8) # Direção 
-		lw $9, 12($8)  # Cor
-		lw $8, 4($8)   # Posição
+		lui $9, 0x0000
+		ori $9, $9, 0x0000   # Iniciando com a cor Preta
+		lui $10, 0x0031
+		ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
 		
-		addi $11, $0, 1   # Direção Norte (Cima)
-		jal verificarImpactoComOsObstaculos    # Tambem é usado para moviemntar o personagem
+		lw $25, -512($8)
+		beq $25, $9, fimMovimentoPlayer
+		beq $25, $10, fimMovimentoPlayer
 		
-		beq $12, $0, loopPrincipal   # Devera ser substituido pelo movimento dos Bots
+		lw $25, -540($8)
+		beq $25, $9, fimMovimentoPlayer
+		beq $25, $10, fimMovimentoPlayer
 		
-		jal criarPersonagem
+		# Else:
+		addi $8, $8, -512    # Movimentar para cima
 		
-		move $25, $8      # Copia da posição do personagem
-		addi $8, $8, 4096   # Bloco abaixo
-		jal preencherBlocoComUmaCor    # apagar Rastros Do Personagem
-		move $8, $25      # Recupera a posiçãp original do personagem
-		
-		jal AtualizarMovimentoDoPlayer
-		
-		j loopPrincipal   # Devera ser substituido pelo movimento dos Bots
+		j fimMovimentoPlayer
 	baixo:
-		lw $10, 16($8) # Direção 
-		lw $9, 12($8)  # Cor
-		lw $8, 4($8)   # Posição
+		lui $9, 0x0000
+		ori $9, $9, 0x0000   # Iniciando com a cor Preta
+		lui $10, 0x0031
+		ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
 		
-		addi $11, $0, 3
-		jal verificarImpactoComOsObstaculos
+		lw $25, 4096($8)
+		beq $25, $9, fimMovimentoPlayer
+		beq $25, $10, fimMovimentoPlayer
 		
-		beq $12, $0, loopPrincipal   # Devera ser substituido pelo movimento dos Bots
+		lw $25, 4124($8)
+		beq $25, $9, fimMovimentoPlayer
+		beq $25, $10, fimMovimentoPlayer
 		
-		jal criarPersonagem
+		# Else:
+		addi $8, $8, 4096    # Movimentar para baixo
 		
-		move $25, $8      # Copia da posição do personagem
-		addi $8, $8, -4096   # Bloco acima
-		jal preencherBlocoComUmaCor    # apagar Rastros Do Personagem
-		move $8, $25      # Recupera a posiçãp original do personagem
-		
-		jal AtualizarMovimentoDoPlayer
-		
-		j loopPrincipal
+		j fimMovimentoPlayer
 	esquerda:
-		addi $25, $0, 1
-		sw $25, 16($8) # Atualizar direção
-		lw $10, 16($8) # Direção 
-		lw $9, 12($8)  # Cor
-		lw $8, 4($8)   # Posição
+		lui $9, 0x0000
+		ori $9, $9, 0x0000   # Iniciando com a cor Preta
+		lui $10, 0x0031
+		ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
 		
-		addi $11, $0, 4
-		jal verificarImpactoComOsObstaculos
+		lw $25, -4($8)
+		beq $25, $9, fimMovimentoPlayer
+		beq $25, $10, fimMovimentoPlayer
 		
-		beq $12, $0, loopPrincipal   # Devera ser substituido pelo movimento dos Bots
+		lw $25, -4($8)
+		beq $25, $9, fimMovimentoPlayer
+		beq $25, $10, fimMovimentoPlayer
 		
-		jal criarPersonagem
+		# Else:
+		addi $8, $8, -4    # Movimentar para a esquerda
 		
-		move $25, $8      # Copia da posição do personagem
-		addi $8, $8, 32   # Bloco direito
-		jal preencherBlocoComUmaCor    # apagar Rastros Do Personagem
-		move $8, $25      # Recupera a posiçãp original do personagem
-		
-		jal AtualizarMovimentoDoPlayer
-		
-		j loopPrincipal
+		j fimMovimentoPlayer
 	direita:
-		addi $25, $0, 0
-		sw $25, 16($8) # Atualizar direção
-		lw $10, 16($8) # Direção 
-		lw $9, 12($8)  # Cor
-		lw $8, 4($8)   # Posição
+		lui $9, 0x0000
+		ori $9, $9, 0x0000   # Iniciando com a cor Preta
+		lui $10, 0x0031
+		ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
 		
-		addi $11, $0, 2
-		jal verificarImpactoComOsObstaculos
+		lw $25, 4($8)
+		beq $25, $9, fimMovimentoPlayer
+		beq $25, $10, fimMovimentoPlayer
 		
-		beq $12, $0, loopPrincipal   # Devera ser substituido pelo movimento dos Bots
+		lw $25, 4($8)
+		beq $25, $9, fimMovimentoPlayer
+		beq $25, $10, fimMovimentoPlayer
 		
-		jal criarPersonagem
+		# Else:
+		addi $8, $8, 4    # Movimentar para a direita
 		
-		move $25, $8      # Copia da posição do personagem
-		addi $8, $8, -32   # Bloco esquerdo
-		jal preencherBlocoComUmaCor    # apagar Rastros Do Personagem
-		move $8, $25      # Recupera a posiçãp original do personagem
-		
-		jal AtualizarMovimentoDoPlayer
-		
-		j loopPrincipal
+		j fimMovimentoPlayer
 	
+	
+	fimMovimentoPlayer:
+		# Atualiza movimento do personagem do player (Azul)
+		move $25, $8
+		lui $8, 0x1002    # Primeira posição do "array" para as variaveis
+		sw $25, 4($8)
+		move $8, $25   # Recupera a posição do personagem
+		
+		lui $9, 0x0048
+		ori $9, $9, 0xB0F2
+		jal desenharPersonagem
+		
 	
 	j loopPrincipal
 fim:
@@ -378,7 +357,7 @@ copiaCenario:
 # Sujos: $8, $9, $24
 # Saida: ---
 
-criarPersonagem:
+desenharPersonagem:
 	###### Lembrete: Ajustar a posição no $8 antes de chamar a função
 	###### Colocar a cor no $9 antes de chamar a função
 	
@@ -444,223 +423,57 @@ criarPersonagem:
 	# Direita = 0
 	
 	jr $31
-
+	
 
 #####################################################################################
-# Função Inicia as variáveis dos personagens em uma região não visicel do mapa
-# Sujos: $8, $9
+# Função que desenha o personagem
+# Sujos: $8, $9,$25
 # Saida: ---
 
 iniciarVariaveisDosPersonagens:
 	lui $8, 0x1002   # Primeira posição do "array" para as variaveis
 	
-	# Vida 
-	addi $9, $0, 1  # Vivo
-	sw $9, 0($8)
-	sw $9, 20($8)
-	sw $9, 40($8)
-	sw $9, 60($8)
+	addi $25, $0, 1  # Vida
+	sw $25, 0($8)
+	sw $25, 512($8)
+	sw $25, 1024($8)
+	sw $25, 1536($8)
 	
-	# Posiçôes
-	# Personagem 1 - Azul
+	addi $8, $8, 4    # Posição
+	
+	# Posição - AZUL (Player)
 	lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
 	ori $9, $9, 0x1020   # Adiciona 0x1020 aos 16 bits inferiores de $8
-	sw $9, 4($8)
-	# Personagem 2 - Vermelho
+	sw $9, 0($8)   # Posição do player registrada
+	# Posição - VERMELHO
 	lui $9, 0x1001       # Carrega os 16 bits superiores: 0x10010000
 	ori $9, $9, 0x11C0   # Adiciona os 16 bits inferiores: 0x11C0
-	sw $9, 24($8)
-	# Personagem 3 - Amarelo
+	sw $9, 512($8)   # Posição do bot vermelho registrada
+	# Posição - AMARELO
 	lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $9
 	ori $9, $9, 0xE1C0   # Adiciona 0xE1C0 aos 16 bits inferiores de $9
-	sw $9, 44($8)
-	# Personagem 4 - Rosa
+	sw $9, 1024($8)   # Posição do bot Amarelo registrada
+	# Posição - ROSA
 	lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $9
 	ori $9, $9, 0xE020   # Adiciona 0xE020 aos 16 bits inferiores de $9
-	sw $9, 64($8)
+	sw $9, 1536($8)   # Posição do bot rosa registrada
+		
+	addi $8, $8, 4    # Direção
 	
-	# Bombas
-	addi $9, $0, 0  # Bombas inativa
-	sw $9, 8($8)
-	sw $9, 28($8)
-	sw $9, 48($8)
-	sw $9, 68($8)
+	addi $25, $0, 1  # Direita = 1  |  Esquerda = 0
+	sw $25, 0($8)     # Azul
+	sw $25, 1536($8)  # Rosa
+	addi $25, $0, 0
+	sw $25, 512($8)   # Vermelho
+	sw $25, 1024($8)  # Amarlo
 	
-	# Cores
-	# Azul
-	lui $9, 0x0048
-	ori $9, $9, 0xB0F2
-	sw $9, 12($8)
-	# Vermelho
-	lui $9, 0x00F8
-	ori $9, $9, 0x282A
-	sw $9, 32($8)
-	# Amarelo
-	lui $9, 0x00F9
-	ori $9, $9, 0xFF1C
-	sw $9, 52($8)
-	# Rosa
-	lui $9, 0x00FF
-	ori $9, $9, 0x3CEC
-	sw $9, 72($8)
+	addi $8, $8, 4    # Quantidade de bombas disponiveis (Começa com 2)
 	
-	# Direção
-	# Direita (Azul e Rosa)
-	addi $9, $0, 0
-	sw $9, 16($8)
-	sw $9, 76($8)
-	# Esquerda (Vermelho e Amarelo)
-	addi $9, $0, 1
-	sw $9, 36($8)
-	sw $9, 52($8)
+	addi $25, $0, 2  # Bombas
+	sw $25, 0($8)
+	sw $25, 512($8)
+	sw $25, 1024($8)
+	sw $25, 1536($8)
 	
 	jr $31
 	
-
-#####################################################################################
-# Função que atualiza a posição do personagem principal no "array"
-# Sujos: $8, $9
-# Saida: ---
-AtualizarMovimentoDoPlayer:
-	# Atualizar movimento do personagem do player (Azul)
-	move $25, $8    # Criar cópia da posição atual
-	lui $8, 0x1002   # Primeira posição do "array" para as variaveis
-	sw $25, 4($8)
-	
-	jr $31
-
-#####################################################################################
-# Função que verifica se o movimento é valido
-# Sujos: $8, $9, $10, $11, $12
-# Saida: $12
-# Registrador $8: Armazena a posição dos personagens,e é usado como ponteiro para o array de variaveis dos personagens
-# Registrador: Armazena a cor (Normalmente), mas serve como registrador temporario
-
-verificarImpactoComOsObstaculos:
-	addi $12, $0, 0    # Contador de movimento
-	move $24, $9       # Cria uma copia da cor
-
-	# Esquerda
-	addi $25, $0, 4
-	beq $11, $25, VerificarEsquerda
-	# Direita
-	addi $25, $0, 2
-	beq $11, $25, VerificarDireita
-	# Cima
-	addi $25, $0, 1
-	beq $11, $25, VerificarCima
-	# Baixo
-	addi $25, $0, 3
-	beq $11, $25, VerificarBaixo
-	
-	VerificarEsquerda:
-		lw $25, -4($8)
-		
-		# Verificar se é preto
-		lui $9, 0x0000
-		ori $9, $9, 0x0000   # Iniciando com a cor Preta
-		beq $25, $9, pararMovimento # Se for preto
-		
-		# Else: Verificar se é cinza
-		lui $9, 0x0031
-		ori $9, $9, 0x3031   # Iniciando com a cor Cinza Escuro
-		beq $25, $9, pararMovimento # Se for cinza
-		
-		# Não vai bater, então da uma passinho para a esquerda
-		addi $8, $8, -32
-		addi $12, $0, 1    # Incrementa contador de movimento
-		
-		j pararMovimento
-	
-	VerificarDireita:
-		lw $25, 32($8)
-		
-		# Verificar se é preto
-		lui $9, 0x0000
-		ori $9, $9, 0x0000   # Iniciando com a cor Preta
-		beq $25, $9, pararMovimento # Se for preto
-		
-		# Else: Verificar se é cinza
-		lui $9, 0x0031
-		ori $9, $9, 0x3031   # Iniciando com a cor Cinza Escuro
-		beq $25, $9, pararMovimento # Se for cinza
-		
-		# Não vai bater, então da uma passinho para a esquerda
-		addi $8, $8, 32
-		addi $12, $0, 1    # Incrementa contador de movimento
-		
-		j pararMovimento
-		
-	VerificarCima:
-		lw $25, -512($8)
-		
-		# Verificar se é preto
-		lui $9, 0x0000
-		ori $9, $9, 0x0000   # Iniciando com a cor Preta
-		beq $25, $9, pararMovimento # Se for preto
-		
-		# Else: Verificar se é cinza
-		lui $9, 0x0031
-		ori $9, $9, 0x3031   # Iniciando com a cor Cinza Escuro
-		beq $25, $9, pararMovimento # Se for cinza
-		
-		# Não vai bater, então da uma passinho para a cima
-		addi $8, $8, -4096
-		addi $12, $0, 1    # Incrementa contador de movimento
-		
-		j pararMovimento
-	
-	VerificarBaixo:
-		lw $25, 4096($8)
-		
-		# Verificar se é preto
-		lui $9, 0x0000
-		ori $9, $9, 0x0000   # Iniciando com a cor Preta
-		beq $25, $9, pararMovimento # Se for preto
-		
-		# Else: Verificar se é cinza
-		lui $9, 0x0031
-		ori $9, $9, 0x3031   # Iniciando com a cor Cinza Escuro
-		beq $25, $9, pararMovimento # Se for cinza
-		
-		# Não vai bater, então da uma passinho para a cima
-		addi $8, $8, 4096
-		addi $12, $0, 1    # Incrementa contador de movimento
-		
-		j pararMovimento
-	
-	pararMovimento:
-		move $9, $24       # Recupera a cor
-		jr $31
-		
-#####################################################################################
-# Função que preenche um quadrado 8x8 unidade graficas com uma cor expecificada antes da chamada da função
-# Sujos: $8, $9, $10
-# Saida: 
-# O registrador $8 contem a posição atual do bot ou player, que sera recuperado depois do retorno da função.
-
-preencherBlocoComUmaCor:
-	addi $10, $0, 8   # Limite de colunas
-	
-	lw $9, 65536($8)   # Cor usada para preencher quadrado
-	
-	loopPintarQuadradoCompleto:
-		beq $10, $0, fimPreencherBlocoComUmaCor
-		addi $10, $10, -1  # Decrementa a qtd de colunas não preenchidas
-		
-		sw $9, 0($8)
-		sw $9, 512($8)
-		sw $9, 1024($8)
-		sw $9, 1536($8)
-		sw $9, 2048($8)
-		sw $9, 2560($8)
-		sw $9, 3072($8)
-		sw $9, 3584($8)
-		
-		addi $8, $8, 4
-		
-		j loopPintarQuadradoCompleto
-	
-	
-	fimPreencherBlocoComUmaCor:
-		jr $31
