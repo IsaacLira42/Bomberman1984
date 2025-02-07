@@ -270,93 +270,205 @@ loopPrincipal:
 		move $25, $8
 		lui $8, 0x1002    # Primeira posição do "array" para as variaveis
 		sw $25, 4($8)    # Atualiza a variavel da posição do player (AZUL)
-		move $8, $25   # Recupera a posição do personagem
+		#move $8, $25   # Recupera a posição do personagem
 		
 	
 	lui $8, 0x1002    # Primeira posição do "array" para as variaveis
 	addi $8, $8, 4    # Coluna da posição
-	addi $8, $8, 512  # Pular a posição do player
 	
 	
-	######## BOT VERMELHO ########
-	lw $25, 12($8)           # Tempo Entre cada passo do personagem
-	bne $25, $0, naoSeMexe
-	# Else (Se o for a hora do persoegem se mecher):
-		addi $25, $0, 400000
-		sw $25, 12($8)   # Reinicia o tempo de cada passo
+	########################## Movimentação dos BOTs #############################
+	addi $24, $0, 3
+	
+	loopMovimentacaoBOTs: beq $24, $0, desenharTodosOsPersonagens
+		addi $8, $8, 512    #Pular bot ou player
+		addi $24, $24, -1
+	
+		# Verificar se esta vivo
+		lw $25, -4($8)
+		beq $25, $0, loopMovimentacaoBOTs   # O BOT esta MORTO
+	
+		lw $25, 12($8)           # Tempo Entre cada passo do personagem
+		bne $25, $0, naoSeMexe
+		# Else (Se o for a hora do personagem se mecher):
+			addi $25, $0, 10
+			sw $25, 12($8)   # Reinicia o tempo de cada passo
 		
-		lw $25, 16($8)   # Quantidade de passinhos que faltam para trocar de direção
+			lw $25, 16($8)   # Quantidade de passinhos que faltam para trocar de direção
+			bne $25, $0, manterDirecao    # Ja foram dados 8 passinhos
+			# Else
+			addi $25, $0, 8
+			sw $25, 16($8)   # Reinicia a quantidade de passinhos
 		
-		bne $25, $0, manterPosicao    # Ja foram dados 8 passinhos
-		# 27% de chance de mudar a posição
-		gerarValor:
-			# Gerando numero aleatorio entre 1 e 4 (Inclusos)
-			li $5, 11          # Definindo o limite superior (0 a 10)
-			li $2, 42         # Syscall para gerar número aleatório
-			syscall            # Executa o syscall, resultado em $a0 (0 a 3)
-			addi $4, $4, 1   # Ajusta o intervalo para 1 a 11
+			# 27% de chance de mudar a posição
+			gerarValor:
+				# Gerando numero aleatorio entre 1 e 11 (Inclusos)
+				li $5, 9          # Definindo o limite superior (0 a 10)
+				li $2, 42         # Syscall para gerar número aleatório
+				syscall            # Executa o syscall, resultado em $a0 (0 a 3)
+				addi $4, $4, 1   # Ajusta o intervalo para 1 a 11
 			
-			addi $9, $0, $4  # Guardar direção gerada em $9
+				add $9, $0, $4  # Guardar direção gerada em $9
 			
-			lw $11, 0($8)      # Conteudo do 0($8) (Posição do BOT)
-			
-			# Verificar se direção é valida
-			cimaBot:
-				addi $25, $0, 1   # Verificar a direção Norte (1)
-				bne $9, $25, direitaBot
+				lw $25, 4($8)
+				beq $25, $9, manterDirecao
 				
-				lui $9, 0x0000
-				ori $9, $9, 0x0000   # Iniciando com a cor Preta
-				lui $10, 0x0031
-				ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
-		
-				lw $25, -512($11)
-				beq $25, $9, gerarValor
-				beq $25, $10, gerarValor
-		
-				lw $25, -540($11)
-				beq $25, $9, gerarValor
-				beq $25, $10, gerarValor
-		
-				# Else:
-				addi $11, $11, -512    # Movimentar para cima
+				addi $10, $0, 5
+				slt $24, $9, $10  # Direção >= 5 = 0
+				beq $24, $0, manterDirecao
 				
-				j atualizarPosicaoDoBOT
-			direitaBot:
-			# ...
-			# ...
-			# ...
-			# ...
-			# ...
-			# ...
-			# ...
-			# ...
-			# ...
-			# ...
-			# ...
-			# ...
-			# ...
-			# ...
-			# ...
-			# ...
+				# Alterar direção
+					sw $9, 4($8)
 			
+			manterDirecao:
+				lw $11, 0($8)    # Conteudo do 0($8) (Posição do BOT)
+				lw $9, 4($8)     # Pegando a direção atual
 			
-			atualizarPosicaoDoBOT:		
-				sw $11, 0($8)     # atualiza a posição do BOT
+				# Verificar se direção é valida
+				cimaBot:
+					addi $25, $0, 1   # Verificar a direção Norte (1)
+					bne $9, $25, direitaBot
+				
+					lui $9, 0x0000
+					ori $9, $9, 0x0000   # Iniciando com a cor Preta
+					lui $10, 0x0031
+					ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
 		
-		manterPosicao: # Se não tiver dado os 8 pasinhos, mantem a direção
-			# 
+					lw $25, -512($11)
+					beq $25, $9, gerarValor
+					beq $25, $10, gerarValor
+		
+					lw $25, -540($11)
+					beq $25, $9, gerarValor
+					beq $25, $10, gerarValor
+		
+					# Else:
+					addi $11, $11, -512    # Movimentar para cima
+				
+					j atualizarPosicaoDoBOT
+				direitaBot:
+					addi $25, $0, 2   # Verificar a direção direita (2)
+					bne $9, $25, baixoBot
+				
+					lui $9, 0x0000
+					ori $9, $9, 0x0000   # Iniciando com a cor Preta
+					lui $10, 0x0031
+					ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
+		
+					lw $25, 32($11)
+					beq $25, $9, gerarValor
+					beq $25, $10, gerarValor
+		
+					lw $25, 3616($11)
+					beq $25, $9, gerarValor
+					beq $25, $10, gerarValor
+		
+					# Else:
+					addi $11, $11, 4    # Movimentar para cima
+				
+					j atualizarPosicaoDoBOT
+				baixoBot:
+					addi $25, $0, 3   # Verificar a direção direita (2)
+					bne $9, $25, esquerdaBot
+				
+					lui $9, 0x0000
+					ori $9, $9, 0x0000   # Iniciando com a cor Preta
+					lui $10, 0x0031
+					ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
+		
+					lw $25, 4096($11)
+					beq $25, $9, gerarValor
+					beq $25, $10, gerarValor
+		
+					lw $25, 4124($11)
+					beq $25, $9, gerarValor
+					beq $25, $10, gerarValor
+		
+					# Else:
+					addi $11, $11, -4    # Movimentar para cima
+				
+					j atualizarPosicaoDoBOT
+				esquerdaBot:
+					#addi $25, $0, 4   # Verificar a direção esquerda (2)
+					#bne $9, $25, baixoBot
+				
+					lui $9, 0x0000
+					ori $9, $9, 0x0000   # Iniciando com a cor Preta
+					lui $10, 0x0031
+					ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
+		
+					lw $25, -4($11)
+					beq $25, $9, gerarValor
+					beq $25, $10, gerarValor
+		
+					lw $25, 3580($11)
+					beq $25, $9, gerarValor
+					beq $25, $10, gerarValor
+		
+					# Else:
+					addi $11, $11, -4    # Movimentar para esquerda
 			
+				atualizarPosicaoDoBOT:		
+					sw $11, 0($8)     # atualiza a posição do BOT
+				
+					# Decrementar quantidade de passos faltantes
+					lw $12, 16($8)
+					addi $12, $12, -1
+					sw $12, 16($8)
+				
+				j loopMovimentacaoBOTs
+		naoSeMexe:
+			addi $25, $25, -1
+			sw $25, 12($8)   # atualiza o tempo de movimento
+			
+			j loopMovimentacaoBOTs
+		
+	desenharTodosOsPersonagens:
+	desenharPlayer:
+		lui $8, 0x1002    # Primeira posição do "array" para as variaveis
+		addi $8, $8, 4    # Coluna da posição
+		
+		lw $8, 0($8)
+		lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
+		ori $9, $9, 0x1020   # Adiciona 0x1020 aos 16 bits inferiores de $8
+		
+		jal desenharPersonagem
+		
+	desenharBotVermelho:
+		lui $8, 0x1002    # Primeira posição do "array" para as variaveis
+		addi $8, $8, 4    # Coluna da posição
+		addi $8, $8, 512
+
+		lw $8, 0($8)
+		lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
+		ori $9, $9, 0x11C0   # Adiciona 0x1020 aos 16 bits inferiores de $8
+		
+		jal desenharPersonagem
 	
-	naoSeMexe:
-		addi $25, $25, -1
-		sw $25, 12($8)   # atualiza o tempo de movimento
+	desenharBotAmarelo:
+		lui $8, 0x1002    # Primeira posição do "array" para as variaveis
+		addi $8, $8, 4    # Coluna da posição
+		addi $8, $8, 512
+		addi $8, $8, 512
+
+		lw $8, 0($8)
+		lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
+		ori $9, $9, 0xE1C0   # Adiciona 0x1020 aos 16 bits inferiores de $8
 		
+		jal desenharPersonagem
 		
-	
+	desenharBotRosa:
+		lui $8, 0x1002    # Primeira posição do "array" para as variaveis
+		addi $8, $8, 4    # Coluna da posição
+		addi $8, $8, 512
+		addi $8, $8, 512
+		addi $8, $8, 512
+
+		lw $8, 0($8)
+		lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
+		ori $9, $9, 0xE020   # Adiciona 0x1020 aos 16 bits inferiores de $8
 		
-		
-		
+		jal desenharPersonagem
 	
 	j loopPrincipal
 fim:
@@ -559,7 +671,7 @@ iniciarVariaveisDosPersonagens:
 	
 	addi $8, $8, 4 
 	
-	addi $25, $0, 4000000   # Tempo de movimentação
+	addi $25, $0, 10   # Tempo de movimentação
 	sw $25, 0($8)
 	sw $25, 512($8)
 	sw $25, 1024($8)
