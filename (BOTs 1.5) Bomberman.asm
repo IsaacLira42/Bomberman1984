@@ -206,7 +206,9 @@ loopPrincipal:
 		beq $25, $10, fimAtualizarPosicaoDoPlayer
 		
 		# Else:
-		addi $8, $8, -512    # Movimentar para cima
+		addi $8, $8, -1024    # Movimentar para cima
+		
+		addi $9, $0, 1    # Nova Direção
 		
 		j fimAtualizarPosicaoDoPlayer
 	baixo:
@@ -224,7 +226,9 @@ loopPrincipal:
 		beq $25, $10, fimAtualizarPosicaoDoPlayer
 		
 		# Else:
-		addi $8, $8, 4096    # Movimentar para baixo
+		addi $8, $8, 1024    # Movimentar para baixo
+		
+		addi $9, $0, 3    # Nova Direção
 		
 		j fimAtualizarPosicaoDoPlayer
 	esquerda:
@@ -242,8 +246,10 @@ loopPrincipal:
 		beq $25, $10, fimAtualizarPosicaoDoPlayer
 		
 		# Else:
-		addi $8, $8, -4    # Movimentar para a esquerda
+		addi $8, $8, -8    # Movimentar para a esquerda
 		
+		addi $9, $0, 4    # Nova Direção
+
 		j fimAtualizarPosicaoDoPlayer
 	direita:
 		lui $9, 0x0000
@@ -251,17 +257,19 @@ loopPrincipal:
 		lui $10, 0x0031
 		ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
 		
-		lw $25, 4($8)
+		lw $25, 32($8)
 		beq $25, $9, fimAtualizarPosicaoDoPlayer
 		beq $25, $10, fimAtualizarPosicaoDoPlayer
 		
-		lw $25, 4($8)
+		lw $25, 3616($8)
 		beq $25, $9, fimAtualizarPosicaoDoPlayer
 		beq $25, $10, fimAtualizarPosicaoDoPlayer
 		
 		# Else:
-		addi $8, $8, 4    # Movimentar para a direita
+		addi $8, $8, 8    # Movimentar para a direita
 		
+		addi $9, $0, 2    # Nova Direção
+
 		j fimAtualizarPosicaoDoPlayer
 	
 	
@@ -269,6 +277,7 @@ loopPrincipal:
 		# Atualiza movimento do personagem do player (Azul)
 		move $25, $8
 		lui $8, 0x1002    # Primeira posição do "array" para as variaveis
+		sw $9, 8($8)     # atualizado a direção do BOT
 		sw $25, 4($8)    # Atualiza a variavel da posição do player (AZUL)
 		#move $8, $25   # Recupera a posição do personagem
 		
@@ -291,13 +300,13 @@ loopPrincipal:
 		lw $25, 12($8)           # Tempo Entre cada passo do personagem
 		bne $25, $0, naoSeMexe
 		# Else (Se o for a hora do personagem se mecher):
-			addi $25, $0, 10
+			addi $25, $0, 100
 			sw $25, 12($8)   # Reinicia o tempo de cada passo
 		
 			lw $25, 16($8)   # Quantidade de passinhos que faltam para trocar de direção
 			bne $25, $0, manterDirecao    # Ja foram dados 8 passinhos
 			# Else
-			addi $25, $0, 8
+			addi $25, $0, 4
 			sw $25, 16($8)   # Reinicia a quantidade de passinhos
 		
 			# 27% de chance de mudar a posição
@@ -343,7 +352,9 @@ loopPrincipal:
 					beq $25, $10, gerarValor
 		
 					# Else:
-					addi $11, $11, -512    # Movimentar para cima
+					addi $11, $11, -1024    # Movimentar para cima
+					
+					addi $9, $0, 1    # nova direção
 				
 					j atualizarPosicaoDoBOT
 				direitaBot:
@@ -364,11 +375,13 @@ loopPrincipal:
 					beq $25, $10, gerarValor
 		
 					# Else:
-					addi $11, $11, 4    # Movimentar para cima
+					addi $11, $11, 8    # Movimentar para cima
+					
+					addi $9, $0, 2    # nova direção
 				
 					j atualizarPosicaoDoBOT
 				baixoBot:
-					addi $25, $0, 3   # Verificar a direção direita (2)
+					addi $25, $0, 3   # Verificar a direção baixo
 					bne $9, $25, esquerdaBot
 				
 					lui $9, 0x0000
@@ -385,7 +398,9 @@ loopPrincipal:
 					beq $25, $10, gerarValor
 		
 					# Else:
-					addi $11, $11, -4    # Movimentar para cima
+					addi $11, $11, 1024    # Movimentar para cima
+					
+					addi $9, $0, 3    # nova direção
 				
 					j atualizarPosicaoDoBOT
 				esquerdaBot:
@@ -406,10 +421,13 @@ loopPrincipal:
 					beq $25, $10, gerarValor
 		
 					# Else:
-					addi $11, $11, -4    # Movimentar para esquerda
+					addi $11, $11, -8    # Movimentar para esquerda
+					
+					addi $9, $0, 4    # nova direção
 			
 				atualizarPosicaoDoBOT:		
 					sw $11, 0($8)     # atualiza a posição do BOT
+					sw $9, 8($8)     # atualizado a direção do BOT
 				
 					# Decrementar quantidade de passos faltantes
 					lw $12, 16($8)
@@ -424,52 +442,67 @@ loopPrincipal:
 			j loopMovimentacaoBOTs
 		
 	desenharTodosOsPersonagens:
-	desenharPlayer:
-		lui $8, 0x1002    # Primeira posição do "array" para as variaveis
-		addi $8, $8, 4    # Coluna da posição
+		desenharPlayer:
+			lui $8, 0x1002    # Primeira posição do "array" para as variaveis
+			addi $8, $8, 4    # Coluna da posição
+			lw $8, 0($8)
+			lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
+			ori $9, $9, 0x1020   # Adiciona 0x1020 aos 16 bits inferiores de $8
+			jal desenharPersonagem
+			
+			lui $8, 0x1002
+			lw $9, 8($8)    # Direção
+			lw $8, 4($8)    # Posiç~ao do personagem
+			jal apagarRastros
 		
-		lw $8, 0($8)
-		lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
-		ori $9, $9, 0x1020   # Adiciona 0x1020 aos 16 bits inferiores de $8
-		
-		jal desenharPersonagem
-		
-	desenharBotVermelho:
-		lui $8, 0x1002    # Primeira posição do "array" para as variaveis
-		addi $8, $8, 4    # Coluna da posição
-		addi $8, $8, 512
-
-		lw $8, 0($8)
-		lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
-		ori $9, $9, 0x11C0   # Adiciona 0x1020 aos 16 bits inferiores de $8
-		
-		jal desenharPersonagem
+		desenharBotVermelho:
+			lui $8, 0x1002    # Primeira posição do "array" para as variaveis
+			addi $8, $8, 4    # Coluna da posição
+			addi $8, $8, 512
+			lw $8, 0($8)
+			lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
+			ori $9, $9, 0x11C0   # Adiciona 0x1020 aos 16 bits inferiores de $8
+			jal desenharPersonagem
+			
+			lui $8, 0x1002
+			addi $8, $8, 512
+			lw $9, 8($8)    # Direção
+			lw $8, 4($8)    # Posiç~ao do personagem
+			jal apagarRastros
 	
-	desenharBotAmarelo:
-		lui $8, 0x1002    # Primeira posição do "array" para as variaveis
-		addi $8, $8, 4    # Coluna da posição
-		addi $8, $8, 512
-		addi $8, $8, 512
-
-		lw $8, 0($8)
-		lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
-		ori $9, $9, 0xE1C0   # Adiciona 0x1020 aos 16 bits inferiores de $8
+		desenharBotAmarelo:
+			lui $8, 0x1002    # Primeira posição do "array" para as variaveis
+			addi $8, $8, 4    # Coluna da posição
+			addi $8, $8, 512
+			addi $8, $8, 512
+			lw $8, 0($8)
+			lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
+			ori $9, $9, 0xE1C0   # Adiciona 0x1020 aos 16 bits inferiores de $8
+			jal desenharPersonagem
+			
+			lui $8, 0x1002
+			addi $8, $8, 1024
+			lw $9, 8($8)    # Direção
+			lw $8, 4($8)    # Posiç~ao do personagem
+			jal apagarRastros
 		
-		jal desenharPersonagem
+		desenharBotRosa:
+			lui $8, 0x1002    # Primeira posição do "array" para as variaveis
+			addi $8, $8, 4    # Coluna da posição
+			addi $8, $8, 512
+			addi $8, $8, 512
+			addi $8, $8, 512
+			lw $8, 0($8)
+			lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
+			ori $9, $9, 0xE020   # Adiciona 0x1020 aos 16 bits inferiores de $8
+			jal desenharPersonagem
+			
+			lui $8, 0x1002
+			addi $8, $8, 1536
+			lw $9, 8($8)    # Direção
+			lw $8, 4($8)    # Posiç~ao do personagem
+			jal apagarRastros
 		
-	desenharBotRosa:
-		lui $8, 0x1002    # Primeira posição do "array" para as variaveis
-		addi $8, $8, 4    # Coluna da posição
-		addi $8, $8, 512
-		addi $8, $8, 512
-		addi $8, $8, 512
-
-		lw $8, 0($8)
-		lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
-		ori $9, $9, 0xE020   # Adiciona 0x1020 aos 16 bits inferiores de $8
-		
-		jal desenharPersonagem
-	
 	j loopPrincipal
 fim:
 	addi $2, $0, 10
@@ -547,7 +580,7 @@ copiaCenario:
 
 #####################################################################################
 # Função que desenha o personagem
-# Sujos: $8, $9, $24
+# Sujos: $8, $9
 # Saida: ---
 
 desenharPersonagem:
@@ -613,8 +646,6 @@ desenharPersonagem:
 	sw $9, 3080($8)
 	sw $9, 3092($8)
 	
-	# Direita = 0
-	
 	jr $31
 	
 
@@ -653,8 +684,8 @@ iniciarVariaveisDosPersonagens:
 		
 	addi $8, $8, 4    # Direção
 	
-	# Cima \ Direita = 2 \ Baixo = 3 \ Esquerda = 4
-	addi $25, $0, 2   
+	# Cima = 1 \ Direita = 2 \ Baixo = 3 \ Esquerda = 4
+	addi $25, $0, 2
 	sw $25, 0($8)     # Azul
 	sw $25, 1536($8)  # Rosa
 	addi $25, $0, 4
@@ -671,7 +702,7 @@ iniciarVariaveisDosPersonagens:
 	
 	addi $8, $8, 4 
 	
-	addi $25, $0, 10   # Tempo de movimentação
+	addi $25, $0, 100   # Tempo de movimentação
 	sw $25, 0($8)
 	sw $25, 512($8)
 	sw $25, 1024($8)
@@ -679,10 +710,271 @@ iniciarVariaveisDosPersonagens:
 	
 	addi $8, $8, 4
 	
-	addi $25, $0, 8  # Limite de Passos
+	addi $25, $0, 4  # Limite de Passos
 	sw $25, 0($8)
 	sw $25, 512($8)
 	sw $25, 1024($8)
 	sw $25, 1536($8)
 	
 	jr $31
+
+#####################################################################################
+# Função que apaga os rastros dos personagens
+# Sujos: $8, $9
+# Saida: ---
+# $8: Contem a osição do personagem
+# $9: Tera a direção atual do personagem (1: Norte, 2: Leste, 3: sul, 4: Oeste)
+
+apagarRastros:
+	add $25, $0, $8    # Coia do registrador $8
+
+	addi $25, $0, 1    # Cima
+	beq $9, $25, apagarBaixo       # OK
+	addi $25, $0, 2    # Direita
+	beq $9, $25, apagarEsquerda    # OK
+	addi $25, $0, 3    # Baixo
+	beq $9, $25, apagarCima
+	addi $25, $0, 4    # Esquerda
+	beq $9, $25, apagarDireita     # OK
+	
+	apagarBaixo:
+		addi $8, $8, 536
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 1536
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -12
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -12
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 1028
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 16
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 516
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		
+		j rastrosApagados
+		
+		
+	apagarEsquerda:
+		addi $8, $8, 2040
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 1028
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -1024
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -1024
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -508
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 1536
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -3580
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 1536
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 1544
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		
+		j rastrosApagados
+	
+	
+	apagarDireita:
+		addi $8, $8, 2084
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel	
+		addi $8, $8, -2052
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 1024
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 1024
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -3588
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 1536
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -3588
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 1536
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 1528
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		
+		j rastrosApagados
+	
+	
+	apagarCima:
+		addi $8, $8, 1024
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -1536
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 2064
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, -512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		
+		j rastrosApagados
+	
+		
+	rastrosApagados:
+		add $8, $0, $25   # Recuperando posição
+		jr $31
+		
+	
