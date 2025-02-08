@@ -300,7 +300,7 @@ loopPrincipal:
 		lw $25, 12($8)           # Tempo Entre cada passo do personagem
 		bne $25, $0, naoSeMexe
 		# Else (Se o for a hora do personagem se mecher):
-			addi $25, $0, 100
+			addi $25, $0, 50
 			sw $25, 12($8)   # Reinicia o tempo de cada passo
 		
 			lw $25, 16($8)   # Quantidade de passinhos que faltam para trocar de direção
@@ -702,7 +702,8 @@ iniciarVariaveisDosPersonagens:
 	
 	addi $8, $8, 4 
 	
-	addi $25, $0, 100   # Tempo de movimentação
+	# OBS: atualiar a linha 303 se modificar o tempo de movimentação
+	addi $25, $0, 50   # Tempo de movimentação
 	sw $25, 0($8)
 	sw $25, 512($8)
 	sw $25, 1024($8)
@@ -859,6 +860,7 @@ apagarRastros:
 	
 	
 	apagarDireita:
+		add $25, $0, $8   # gambiarra
 		addi $8, $8, 2084
 		lw $24, 65536($8)   # Pegar cor da copia não visivel
 		sw $24, 0($8)       # Colar no cenario visivel
@@ -911,6 +913,15 @@ apagarRastros:
 		lw $24, 65536($8)   # Pegar cor da copia não visivel
 		sw $24, 0($8)       # Colar no cenario visivel
 		addi $8, $8, -4
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		
+		add $8, $0, $25
+		
+		addi $8, $8, 536
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
 		lw $24, 65536($8)   # Pegar cor da copia não visivel
 		sw $24, 0($8)       # Colar no cenario visivel
 		
