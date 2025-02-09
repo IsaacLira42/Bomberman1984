@@ -160,9 +160,8 @@ obstaculos:
 #####################################################################################
 fimDoCenarioEstatico:
 	jal copiaCenario #Chamada da função que cria uma copia do cenário fora do display
-	
-	jal iniciarVariaveisDosPersonagens
 
+	jal iniciarVariaveisDosPersonagens
 
 	lui $21, 0xffff   # não sei o que é, não sei para que serve, so sei que não sei assembly, e so funciona com isso.
 loopPrincipal:
@@ -187,10 +186,17 @@ loopPrincipal:
 	beq $23, $24, baixo
 	addi $24, $0, 'w'          # Carrega 'w' no $24
 	beq $23, $24, cima
+	addi $24, $0, ' '         # Carrega espaço (' ') no $24
+ 	beq $23, $24, salvarPosiçãoBombaPlayer   # Verifica se a tecla espaço foi pressionada
 	
 	j fimAtualizarPosicaoDoPlayer            # Volta ao início do loop
 	
-
+	salvarPosiçãoBombaPlayer:
+		lui $9, 0x1002
+		jal salvarPosiçãoBomba
+		
+		j fimAtualizarPosicaoDoPlayer
+	
 	cima:
 		lui $9, 0x0000
 		ori $9, $9, 0x0000   # Iniciando com a cor Preta
@@ -201,7 +207,7 @@ loopPrincipal:
 		beq $25, $9, fimAtualizarPosicaoDoPlayer
 		beq $25, $10, fimAtualizarPosicaoDoPlayer
 		
-		lw $25, -540($8)
+		lw $25, -480($8)
 		beq $25, $9, fimAtualizarPosicaoDoPlayer
 		beq $25, $10, fimAtualizarPosicaoDoPlayer
 		
@@ -300,7 +306,7 @@ loopPrincipal:
 		lw $25, 12($8)           # Tempo Entre cada passo do personagem
 		bne $25, $0, naoSeMexe
 		# Else (Se o for a hora do personagem se mecher):
-			addi $25, $0, 50
+			addi $25, $0, 100
 			sw $25, 12($8)   # Reinicia o tempo de cada passo
 		
 			lw $25, 16($8)   # Quantidade de passinhos que faltam para trocar de direção
@@ -438,16 +444,16 @@ loopPrincipal:
 		naoSeMexe:
 			addi $25, $25, -1
 			sw $25, 12($8)   # atualiza o tempo de movimento
-			
 			j loopMovimentacaoBOTs
-		
+
+
 	desenharTodosOsPersonagens:
 		desenharPlayer:
 			lui $8, 0x1002    # Primeira posição do "array" para as variaveis
 			addi $8, $8, 4    # Coluna da posição
 			lw $8, 0($8)
-			lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
-			ori $9, $9, 0x1020   # Adiciona 0x1020 aos 16 bits inferiores de $8
+			lui $9, 0x0061       # Carrega 0x1001 nos 16 bits superiores de $8
+			ori $9, $9, 0xB4EC   # Adiciona 0x1020 aos 16 bits inferiores de $8
 			jal desenharPersonagem
 			
 			lui $8, 0x1002
@@ -460,8 +466,8 @@ loopPrincipal:
 			addi $8, $8, 4    # Coluna da posição
 			addi $8, $8, 512
 			lw $8, 0($8)
-			lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
-			ori $9, $9, 0x11C0   # Adiciona 0x1020 aos 16 bits inferiores de $8
+			lui $9, 0x00FA       # Carrega 0x1001 nos 16 bits superiores de $8
+			ori $9, $9, 0x292A   # Adiciona 0x1020 aos 16 bits inferiores de $8
 			jal desenharPersonagem
 			
 			lui $8, 0x1002
@@ -476,8 +482,8 @@ loopPrincipal:
 			addi $8, $8, 512
 			addi $8, $8, 512
 			lw $8, 0($8)
-			lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
-			ori $9, $9, 0xE1C0   # Adiciona 0x1020 aos 16 bits inferiores de $8
+			lui $9, 0x00F9       # Carrega 0x1001 nos 16 bits superiores de $8
+			ori $9, $9, 0xFE1D   # Adiciona 0x1020 aos 16 bits inferiores de $8
 			jal desenharPersonagem
 			
 			lui $8, 0x1002
@@ -493,8 +499,8 @@ loopPrincipal:
 			addi $8, $8, 512
 			addi $8, $8, 512
 			lw $8, 0($8)
-			lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
-			ori $9, $9, 0xE020   # Adiciona 0x1020 aos 16 bits inferiores de $8
+			lui $9, 0x00F7       # Carrega 0x1001 nos 16 bits superiores de $8
+			ori $9, $9, 0x72A5   # Adiciona 0x1020 aos 16 bits inferiores de $8
 			jal desenharPersonagem
 			
 			lui $8, 0x1002
@@ -502,6 +508,159 @@ loopPrincipal:
 			lw $9, 8($8)    # Direção
 			lw $8, 4($8)    # Posiç~ao do personagem
 			jal apagarRastros
+	
+	
+	########################## Ataque dos bots (Bombas) #############################
+	verificarInimigoSoltarBomba:
+		addi $24, $0, 3   # Contador de inimigos
+		
+		lui $9, 0x1002   # Array
+		addi $9, $9, 512   # Pular o player
+		
+		loopVerificarInimigoSoltarBomba: beq $24, $0, fimVerificarInimigoSoltarBomba
+			add $23, $0, $9   # Copia do $9
+		
+			lw $8, 4($9)   # Pegar a posição do boneco
+			lw $9, 8($9)   # Pegar a direção
+			
+			addi $25, $0, 1
+			beq $9, $25, verificarCima
+			addi $25, $0, 2
+			beq $9, $25, verificarDireita
+			addi $25, $0, 3
+			beq $9, $25, verificarBaixo
+			addi $25, $0, 4
+			beq $9, $25, verificarEsquerda
+		
+			
+				verificarCima:  # OK
+					lw $25, -3060($8)
+					jal verificarProximidadeDeInimigos
+					addi $15, $0, 404
+					beq $10, $15, detectado   # o $10 Retorno o 404, se o inimigo foi detectado
+					
+					lw $25, -1524($8)
+					jal verificarProximidadeDeInimigos
+					addi $15, $0, 404
+					beq $10, $15, detectado   # o $10 Retorno o 404, se o inimigo foi detectado
+					
+					lw $25, -2028($8)
+					jal verificarProximidadeDeInimigos
+					addi $15, $0, 404
+					beq $10, $15, detectado   # o $10 Retorno o 404, se o inimigo foi detectado
+					
+					j reiniciarLoop
+					
+				verificarDireita:  # OK
+					lw $25, 1076($8)
+					jal verificarProximidadeDeInimigos
+					addi $15, $0, 404
+					beq $10, $15, detectado   # o $10 Retorno o 404, se o inimigo foi detectado
+					
+					lw $25, 1064($8)
+					jal verificarProximidadeDeInimigos
+					addi $15, $0, 404
+					beq $10, $15, detectado   # o $10 Retorno o 404, se o inimigo foi detectado
+					
+					lw $25, 2092($8)
+					jal verificarProximidadeDeInimigos
+					addi $15, $0, 404
+					beq $10, $15, detectado   # o $10 Retorno o 404, se o inimigo foi detectado
+					
+					j reiniciarLoop
+					
+				verificarBaixo:  # OK
+					lw $25, 6668($8)
+					jal verificarProximidadeDeInimigos
+					addi $15, $0, 404
+					beq $10, $15, detectado   # o $10 Retorno o 404, se o inimigo foi detectado
+					
+					lw $25, 8204($8)
+					jal verificarProximidadeDeInimigos
+					addi $15, $0, 404
+					beq $10, $15, detectado   # o $10 Retorno o 404, se o inimigo foi detectado
+					
+					lw $25, 7700($8)
+					jal verificarProximidadeDeInimigos
+					addi $15, $0, 404
+					beq $10, $15, detectado   # o $10 Retorno o 404, se o inimigo foi detectado
+					
+					j reiniciarLoop
+					
+				verificarEsquerda:  # OK
+					lw $25, 1512($8)
+					jal verificarProximidadeDeInimigos
+					addi $15, $0, 404
+					beq $10, $15, detectado   # o $10 Retorno o 404, se o inimigo foi detectado
+					
+					lw $25, 1524($8)
+					jal verificarProximidadeDeInimigos
+					addi $15, $0, 404
+					beq $10, $15, detectado   # o $10 Retorno o 404, se o inimigo foi detectado
+					
+					lw $25, 3060($8)
+					jal verificarProximidadeDeInimigos	
+					addi $15, $0, 404
+					beq $10, $15, detectado   # o $10 Retorno o 404, se o inimigo foi detectado
+					
+					j reiniciarLoop
+				
+			detectado:
+				add $9, $0, $23  # ecuperando valor do $9
+				jal salvarPosiçãoBomba
+					
+			reiniciarLoop:
+				add $9, $0, $23  # ecuperando valor do $9
+				addi $9, $9, 512  # Proximo BOT
+				addi $24, $24, -1
+				j loopVerificarInimigoSoltarBomba
+					
+	
+	
+fimVerificarInimigoSoltarBomba:
+	addi $15, $0, 4
+	lui $11, 0x1002
+	loopDesenharTodasAsBombas: beq $15, $0, fimDesenharBombas
+		bomba1:
+			lw $8, 24($11)  # posição da bomba
+			lw $10, 28($11)  # timer da bomba 1
+			beq $8, $0, bomba2   # Verificar se a bomba 1 exist
+			
+			jal desenharBomba
+			
+			addi $10, $10, -1
+			sw $10, 28($11)    #  Atualiza o timer da bomba 1
+			
+			bne $10, $0, bomba2
+			# Else: (Se o contador chegar a 0, reinicia variaveis da bomba 1)
+				sw $0, 24($11)  # Limpa a posição da bomba
+				addi $24, $0, 4500   # reinicia o timer da bomba 
+				sw $24, 28($11)  # timer da bomba 1
+		bomba2:
+			lw $8, 32($11)  # posição da bomba
+			lw $10, 36($11)  # timer da bomba 2
+			beq $8, $0, atualizarVariaveis  # Verificar se a bomba 1 existe
+			
+			jal desenharBomba
+			
+			addi $10, $10, -1
+			sw $10, 36($11)    #  Atualiza o timer da bomba 2
+			
+			bne $10, $0, atualizarVariaveis
+			# Else: (Se o contador chegar a 0, reinicia variaveis da bomba 2)
+				sw $0, 32($11)  # Limpa a posição da bomba
+				addi $24, $0, 4500      # reinicia o timer da bomba 
+				sw $24, 36($11)  # timer da bomba 1
+
+		atualizarVariaveis:
+			addi $11, $11, 512   # Pula para o proximo personagem
+			addi $15, $15, -1    # Decrementa a qunatidade de personagens que faltam desenhar as bombas
+			
+			j loopDesenharTodasAsBombas
+			
+			
+	fimDesenharBombas:
+	
 		
 	j loopPrincipal
 fim:
@@ -664,7 +823,6 @@ iniciarVariaveisDosPersonagens:
 	sw $25, 1536($8)
 	
 	addi $8, $8, 4    # Posição
-	
 	# Posição - AZUL (Player)
 	lui $9, 0x1001       # Carrega 0x1001 nos 16 bits superiores de $8
 	ori $9, $9, 0x1020   # Adiciona 0x1020 aos 16 bits inferiores de $8
@@ -683,7 +841,6 @@ iniciarVariaveisDosPersonagens:
 	sw $9, 1536($8)   # Posição do bot rosa registrada
 		
 	addi $8, $8, 4    # Direção
-	
 	# Cima = 1 \ Direita = 2 \ Baixo = 3 \ Esquerda = 4
 	addi $25, $0, 2
 	sw $25, 0($8)     # Azul
@@ -693,7 +850,6 @@ iniciarVariaveisDosPersonagens:
 	sw $25, 1024($8)  # Amarlo
 	
 	addi $8, $8, 4    # Quantidade de bombas disponiveis (Começa com 2)
-	
 	addi $25, $0, 2  # Bombas
 	sw $25, 0($8)
 	sw $25, 512($8)
@@ -701,17 +857,43 @@ iniciarVariaveisDosPersonagens:
 	sw $25, 1536($8)
 	
 	addi $8, $8, 4 
-	
-	# OBS: atualiar a linha 303 se modificar o tempo de movimentação
-	addi $25, $0, 50   # Tempo de movimentação
+	# OBS: atualiar a linha 309 se modificar o tempo de movimentação
+	addi $25, $0, 100   # Tempo de movimentação
 	sw $25, 0($8)
 	sw $25, 512($8)
 	sw $25, 1024($8)
 	sw $25, 1536($8)
 	
 	addi $8, $8, 4
-	
 	addi $25, $0, 4  # Limite de Passos
+	sw $25, 0($8)
+	sw $25, 512($8)
+	sw $25, 1024($8)
+	sw $25, 1536($8)
+	
+	# BOMBA 1
+	addi $8, $8, 4   # Posição da bomba 1
+	addi $25, $0, 0  # Posição inicial é 0
+	sw $25, 0($8)
+	sw $25, 512($8)
+	sw $25, 1024($8)
+	sw $25, 1536($8)
+	addi $8, $8, 4   # Timer da bomba 1
+	addi $25, $0, 4500  # Tempo inicial é 1000 iteraç~oes
+	sw $25, 0($8)
+	sw $25, 512($8)
+	sw $25, 1024($8)
+	sw $25, 1536($8)
+	
+	# BOMBA 2
+	addi $8, $8, 4   # Posição da bomba 2
+	addi $25, $0, 0  # Posição inicial é 0
+	sw $25, 0($8)
+	sw $25, 512($8)
+	sw $25, 1024($8)
+	sw $25, 1536($8)
+	addi $8, $8, 4   # Timer da bomba 2
+	addi $25, $0, 4500  # Tempo inicial é 1000 iteraç~oes
 	sw $25, 0($8)
 	sw $25, 512($8)
 	sw $25, 1024($8)
@@ -734,7 +916,7 @@ apagarRastros:
 	addi $25, $0, 2    # Direita
 	beq $9, $25, apagarEsquerda    # OK
 	addi $25, $0, 3    # Baixo
-	beq $9, $25, apagarCima
+	beq $9, $25, apagarCima        # OK
 	addi $25, $0, 4    # Esquerda
 	beq $9, $25, apagarDireita     # OK
 	
@@ -797,9 +979,7 @@ apagarRastros:
 		lw $24, 65536($8)   # Pegar cor da copia não visivel
 		sw $24, 0($8)       # Colar no cenario visivel
 		
-		j rastrosApagados
-		
-		
+		j rastrosApagados	
 	apagarEsquerda:
 		addi $8, $8, 2040
 		lw $24, 65536($8)   # Pegar cor da copia não visivel
@@ -856,9 +1036,7 @@ apagarRastros:
 		lw $24, 65536($8)   # Pegar cor da copia não visivel
 		sw $24, 0($8)       # Colar no cenario visivel
 		
-		j rastrosApagados
-	
-	
+		j rastrosApagados	
 	apagarDireita:
 		add $25, $0, $8   # gambiarra
 		addi $8, $8, 2084
@@ -915,9 +1093,7 @@ apagarRastros:
 		addi $8, $8, -4
 		lw $24, 65536($8)   # Pegar cor da copia não visivel
 		sw $24, 0($8)       # Colar no cenario visivel
-		
 		add $8, $0, $25
-		
 		addi $8, $8, 536
 		lw $24, 65536($8)   # Pegar cor da copia não visivel
 		sw $24, 0($8)       # Colar no cenario visivel
@@ -926,8 +1102,6 @@ apagarRastros:
 		sw $24, 0($8)       # Colar no cenario visivel
 		
 		j rastrosApagados
-	
-	
 	apagarCima:
 		addi $8, $8, 1024
 		lw $24, 65536($8)   # Pegar cor da copia não visivel
@@ -982,10 +1156,328 @@ apagarRastros:
 		sw $24, 0($8)       # Colar no cenario visivel
 		
 		j rastrosApagados
-	
-		
 	rastrosApagados:
 		add $8, $0, $25   # Recuperando posição
 		jr $31
+
+#####################################################################################
+# Função que desenha a bomba de acordo com o seu estado
+# Sujos: $8, $9, $10, $24, $25
+# Saida: ---
+# $8: ira conter a posição da bomba
+# $9: Contera a cor
+# $10: contem o timer da bomba
+# $24: Armazena o resultado do slt
+
+##### NÃO ALTERAR O VALOR DO $11
+
+desenharBomba:	
+	#### OBS: O timer da bomba no momento é de 4500 iterações
+	
+	# Estado 1: Bomba
+	addi $25, $0, 500   # Se diminuir, aumenta o tempo da explosão
+	slt $24, $10, $25  # timer >= 500 = 0
+	beq $24, $0, desenharBombaInativa
+	
+	# Transição entre bomba inativa e explosão
+	addi $25, $25, -1
+	beq $10, $25, apagarBomba
+	
+	# Estado 2: Explosão
+	addi $25, $0, 2
+	slt $24, $10, $25  # timer >= 2 = 0
+	beq $24, $0, desenharExplosao
+	
+	# Transição entre bomba inativa e explosão
+	addi $25, $0, 1
+	beq $10, $25, apagarExplosao
+	
+	
+	desenharBombaInativa:
+		# laranja pavil
+		li $9 0xFFA500
+		sw $9 16($8)
+	
+		#amarelo pavil
+		li $9 0xFFFF00
+		sw $9 524($8)
+	
+		# branco pavil
+		li $9 0xffffff
+		sw $9 1036($8)
+	
+		# Azul da  bomba
+		lui $9, 0x001F       # Carrega 0x1001 nos 16 bits superiores de $8
+		ori $9, $9, 0x3B58   # Adiciona 0x1020 aos 16 bits inferiores de $8
+	
+		sw $9 1032($8)
+		sw $9 1040($8)
+		sw $9 1032($8)
+		sw $9 1540($8)
+		sw $9 1544($8)
+		sw $9 1548($8)
+		sw $9 1552($8)
+		sw $9 1556($8)
+		sw $9 2052($8)
+		sw $9 2056($8)
+		sw $9 2060($8)
+		sw $9 2064($8)
+		sw $9 2068($8)
+		sw $9 2564($8)
+		sw $9 2568($8)
+		sw $9 2572($8)
+		sw $9 2576($8)
+		sw $9 2580($8)
+		sw $9 3080($8)
+		sw $9 3084($8)
+		sw $9 3088($8)
 		
+		j fimDesenharBomba
+	
+	apagarBomba:
+		add $25, $0, $8   # Copia da posição da bomba
+	
+		addi $8, $8, 4 # Coluna 2
+		addi $8, $8, 1536
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		
+		add $8, $0, $25
+		addi $8, $8, 8 # Coluna 3
+		addi $8, $8, 1024
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		
+		add $8, $0, $25
+		addi $8, $8, 12 # Coluna 4		
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		
+		add $8, $0, $25
+		addi $8, $8, 16 # Coluna 5
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 1024
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		
+		add $8, $0, $25
+		addi $8, $8, 20 # Coluna 7
+		addi $8, $8, 1536
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+		addi $8, $8, 512
+		lw $24, 65536($8)   # Pegar cor da copia não visivel
+		sw $24, 0($8)       # Colar no cenario visivel
+	
+		j fimDesenharBomba
+	
+	desenharExplosao:
+		add $25, $0, $8
+		addi $24, $0, 24
+		addi $8, $8, 1504   # Ajustando a posição
+		lui $9, 0x00FD
+		ori $9, $9, 0x471C 
+
+		loopExplosaoHorizontal: beq $24, $0, atualizarVariaveisExplosao
+			sw $9, 0($8)
+			sw $9, 512($8)
+
+			addi $8, $8, 4
+			addi $24, $24, -1
+			
+			j loopExplosaoHorizontal
+		
+			atualizarVariaveisExplosao:
+				add $8, $0, $25
+				addi $24, $0, 24
+				addi $8, $8, -4084   # Ajustando a posição
+			
+		loopExplosaoVertical: beq $24, $0, fimDesenharBomba
+			sw $9, 0($8)
+			sw $9, 4($8)
+			
+			addi $8, $8, 512
+			addi $24, $24, -1
+			
+			j loopExplosaoVertical
+		
+		j fimDesenharBomba
+		
+	apagarExplosao:
+		add $25, $0, $8
+		addi $24, $0, 24
+		addi $8, $8, 1504   # Ajustando a posição
+
+		loopApagarExplosaoHorizontal: beq $24, $0, atualizarVariaveisApagarExplosao
+			lw $9, 65536($8)   # Pegar cor da copia não visivel
+			sw $9, 0($8)       # Colar no cenario visivel
+			
+			addi $8, $8, 512
+			lw $9, 65536($8)   # Pegar cor da copia não visivel
+			sw $9, 0($8)       # Colar no cenario visivel
+			
+			addi $8, $8, -512
+
+			addi $8, $8, 4
+			addi $24, $24, -1
+			
+			j loopApagarExplosaoHorizontal
+		
+			atualizarVariaveisApagarExplosao:
+				add $8, $0, $25
+				addi $24, $0, 24
+				addi $8, $8, -4084   # Ajustando a posição
+			
+		loopApagarExplosaoVertical: beq $24, $0, fimDesenharBomba
+			lw $9, 65536($8)   # Pegar cor da copia não visivel
+			sw $9, 0($8)       # Colar no cenario visivel
+			
+			addi $8, $8, 4
+			lw $9, 65536($8)   # Pegar cor da copia não visivel
+			sw $9, 0($8)       # Colar no cenario visivel
+			
+			addi $8, $8, -4
+
+			addi $8, $8, 512
+			addi $24, $24, -1
+			
+			j loopApagarExplosaoVertical
+		
+		j fimDesenharBomba
+		
+	fimDesenharBomba:
+		jr $31
+
+
+#####################################################################################
+# Função que coloca a posiç~o da bomba
+# Sujos: $9, $25
+# Saida: ---
+# $9: Sera o ponteiro para o array 
+
+salvarPosiçãoBomba:
+	posicaoBomba1:
+		lw $25, 24($9)
+		bne $25, $0, posicaoBomba2 # Verificar bomba 1, se ja tiver bomba ativa, verifica a segunda bomba
+		# Else: (se não tiver a bomba 1, coloca uma bomba)
+			lw $25, 4($9)   # Pega a posição do personagem
+			sw $25, 24($9) # salvando a posição da bomba
+				
+			j fimSalvarPosiçãoBomba
+			
+	posicaoBomba2:
+		lw $25, 32($9)
+		bne $25, $0, fimSalvarPosiçãoBomba # Verificar bomba 2
+		# Else: (se não tiver a bomba 2, coloca uma bomba)
+			lw $25, 4($9)   # Pega a posição do personagem
+			sw $25, 32($9) # salvando a posição da bomba
+				
+			j fimSalvarPosiçãoBomba
+		
+	fimSalvarPosiçãoBomba:
+		jr $31    # encerra a função
+
+
+#####################################################################################
+# Função queverifica se tem algum personagem proximo
+# Sujos: $9, $10, $25
+# Saida: $10
+# $9: Sera o ponteiro para o array 
+# $25: Contem a cor da unidade grafica
+
+verificarProximidadeDeInimigos:
+	# Azul
+	lui $9, 0x0061 
+	ori $9, $9, 0xB4E	
+	beq $25, $9, inimigoDetectado
+
+	# Vermelho
+	lui $9, 0x00FA 
+	ori $9, $9, 0x292A	
+	beq $25, $9, inimigoDetectado
+
+	# Amarelo
+	lui $9, 0x00F9 
+	ori $9, $9, 0xFE1D	
+	beq $25, $9, inimigoDetectado
+
+	# Rosa
+	lui $9, 0x00F7 
+	ori $9, $9, 0x72A5	
+	beq $25, $9, inimigoDetectado
+
+	# Cor de pele
+	lui $9, 0x00F2
+	ori $9, $9, 0xA862	
+	beq $25, $9, inimigoDetectado
+
+	# Preto (Cabelo e olhos)
+	lui $9, 0x0000
+	ori $9, $9, 0x0004
+	beq $25, $9, inimigoDetectado
+	
+	j semInimigo
+	
+	inimigoDetectado:
+		addi $10, $0, 404   # Inimigo detectado
+		
+		jr $31
+		
+	semInimigo:
+		addi $10, $0, 200   # Nenhum inimigo detectado
+		
+		jr $31
 	
