@@ -300,17 +300,21 @@ loopPrincipal:
 	lui $8, 0x1002    # Primeira posição do "array" para as variaveis
 	lw $25, 0($8)     # Pegar ainformação de se esta ou não vivo
 	beq $25, $0, telaGameOver   # verificar se o player morreu
-	# Else (Ta vivo):
+	# Else (Player esta vivo):
+
+	# Vereificar a vida dos Bots
+	lw $24, 512($8)  # Bot Vermelho
+	bne $24, $0, aindaNaoGanhou
+	lw $24, 1024($8)  # Bot Amarelo
+	bne $24, $0, aindaNaoGanhou
+	lw $24, 1536($8)  # Bot Rosa
+	bne $24, $0, aindaNaoGanhou
+
+	# Else ganhou a fase
+		li $8, 0x10030C00  # Posição da variavel do cenario
+		lw $10, 0($8)  # Pegar a o valor do cenario
 	
-	jal verificarVitoria
-	
-	beq $12, $0, aindaNaoGanhou
-	# Else ganho a fase
-	
-	li $8, 0x10030C00  # Posição da variavel do cenario
-	lw $10, 0($8)  # Pegar a o valor do cenario
-	
-	beq $10, $0, proximaFase
+		beq $10, $0, proximaFase
 	# Vc Ganhou !!!!!!!!!!!!!!!!
 	jal telaYouWin
 	
@@ -1793,29 +1797,6 @@ verificarSeFoiAtingidoPelaExplosao:
 	olhaComoEleTaDeBoa:
 		jr $31
 	
-#####################################################################################
-# Função que verifica se restou apenas o player vivi
-# Sujos: $10, $11, $12, $25
-# Saida: $12
-verificarVitoria:
-	lui $10, 0x1002
-	addi $11, $0, 3
-	addi $12, $0, 0  # Venceu??????? ( 0 = Ainda não)
-	
-	loopVerificarVitoria: beq $11, $0, estaoTodosMortos
-		addi $10, $10, 512
-		addi $11, $11, -1
-		
-		lw $25, 0($10)   # Pega a vida dos bots
-		bne $25, $0, fimVerificarVitoria  # Se ainda tiver bots vivos
-		
-	estaoTodosMortos:
-		addi $12, $0, 1   # Sim, o player ganhou
-		
-	fimVerificarVitoria:
-		jr $31
-		
-
 #####################################################################################
 # Função que desenha game over na tela
 
