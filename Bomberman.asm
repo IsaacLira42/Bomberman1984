@@ -1,7 +1,139 @@
 .text
 main:
+	li $8, 0x10030C00  # Posição da variavel do cenario
+	sw $0, 0($8)  # Iniciando a variavel do cenario como 0 (Primeiro cenario)
+
+cenariosDoJogo:
+	# Posição da variavel do cenario 0x10020C00
+	lw $8, 0($8)   # Pegando o valor do cenario
+	
+	bne $8, $0, SegundoCenario
+	# Else: (Vai para o primeiro cenario)
+
+	lui $8, 0x1001
+	
+	li $9, 0xFF6600FF
+
+	lui $19, 0xAAAA       # 
+	ori $19, $19, 0xFFFF  # Cor Azul Borda
+
+	lui $11, 0xCCCC       # 
+	ori $11, $11, 0xFFFF  # Cor Azul chao
+	
+	addi $12 $0 16 # Tamanho de quadrados da Linha
+	addi $13 $0 16 # Tamanho de linhas
+	addi $14 $0 15 # validador das bordas
+	
+	addi $15 $0 12 # saber se a linha ou coluna esta na 12
+	add $16 $15 $0
+	add $17 $15 $0
+	addi $18 $0 8
+	addi $8 $8 -3584 # Para começar na primeira linha
+	
+pintarTela:
+	beq $13 $0 fimDoCenarioEstatico
+	addi $13 $13 -1
+	addi $12 $12 16
+	addi $8 $8 3584
+	j pintarLinha 
+
+pintarLinha:	
+	add $17 $15 $0
+	beq $12 $0 pintarTela
+	addi $10 $0 8
+	addi $12 $12 -1
+	j quadrado
+
+quadrado:
+	beq $10 $0 lateral
+	beq $10 $18 primeiraColunaQuadrado
+	sw $11, 0($8)       # 1
+	sw $11, 512($8)     # 2
+	sw $11, 1024($8)    # 3
+	sw $11, 1536($8)    # 4
+	sw $11, 2048($8)    # 5
+	sw $11, 2560($8)    # 6
+	sw $11, 3072($8)    # 7
+	sw $19, 3584($8)    # 8
+	addi $8 $8 4
+	addi $10 $10 -1
+	
+	j quadrado
+
+primeiraColunaQuadrado:
+	sw $19, 0($8)       # 1
+	sw $19, 512($8)     # 2
+	sw $19, 1024($8)    # 3
+	sw $19, 1536($8)    # 4
+	sw $19, 2048($8)    # 5
+	sw $19, 2560($8)    # 6
+	sw $19, 3072($8)    # 7
+	sw $19, 3584($8)    # 8
+	addi $8 $8 4
+	addi $10 $10 -1
+	
+	j quadrado
+
+lateral:
+	beq $13 $14 teste #Se for a primeira linha, pinta de cor diferente
+	beq $13 $0 teste #Se for ultima linha, pinta de cor diferente
+	beq $12 $14 teste # se for a primeira coluna, pinta de cor diferente
+	beq $12 $0 teste
+	addi $17 $0 12
+	beq $13 $17 talvezObstaculo
+	addi $17 $0 11
+	beq $13 $17 talvezObstaculo
+	addi $17 $0 8
+	beq $13 $17 talvezObstaculo
+	addi $17 $0 7
+	beq $13 $17 talvezObstaculo
+	addi $17 $0 4
+	beq $13 $17 talvezObstaculo
+	addi $17 $0 3
+	beq $13 $17 talvezObstaculo
+	j pintarLinha
+
+talvezObstaculo:
+	addi $16 $0 12
+	beq $12 $15 teste
+	addi $16 $0 11
+	beq $12 $16 teste
+	addi $16 $0 8
+	beq $12 $16 teste
+	addi $16 $0 7
+	beq $12 $16 teste
+	addi $16 $0 4
+	beq $12 $16 teste
+	addi $16 $0 3
+	beq $12 $16 teste
+	j pintarLinha
+
+teste:
+	addi $10 $10 8
+	addi $8 $8 -32
+	j lateral2
+	
+lateral2:
+
+	beq $10 $0 pintarLinha
+	sw $9, 0($8)       # 1
+	sw $9, 512($8)     # 2
+	sw $9, 1024($8)    # 3
+	sw $9, 1536($8)    # 4
+	sw $9, 2048($8)    # 5
+	sw $9, 2560($8)    # 6
+	sw $9, 3072($8)    # 7
+	sw $9, 3584($8)    # 8
+	addi $8 $8 4
+	addi $10 $10 -1
+	
+	j lateral2
+	
+j fimDoCenarioEstatico
+
+SegundoCenario:
 	# Configuração inicial
-	lui $8, 0x1001       # Endereço base do cenário (vetor gráfico)
+	lui $8, 0x1001       # Endereço base do cenário (0x10010000)
     
 	lui $9, 0x006C       # Verde claro (parte alta)
 	ori $9, $9, 0xBF4C   # Verde claro (completo)
@@ -159,7 +291,7 @@ obstaculos:
 			j loopzaoDesenharObstaculos
 #####################################################################################
 fimDoCenarioEstatico:
-	jal copiaCenario #Chamada da função que cria uma copia do cenário fora do display
+	jal copiaCenario # Chamada da função que cria uma copia do cenário fora do display
 
 	jal iniciarVariaveisDosPersonagens
 
@@ -167,9 +299,27 @@ fimDoCenarioEstatico:
 loopPrincipal:
 	lui $8, 0x1002    # Primeira posição do "array" para as variaveis
 	lw $25, 0($8)     # Pegar ainformação de se esta ou não vivo
-	beq $25, $0, fim   # verificar se o player morreu
+	beq $25, $0, telaGameOver   # verificar se o player morreu
 	# Else (Ta vivo):
 	
+	jal verificarVitoria
+	
+	beq $12, $0, aindaNaoGanhou
+	# Else ganho a fase
+	
+	li $8, 0x10030C00  # Posição da variavel do cenario
+	lw $10, 0($8)  # Pegar a o valor do cenario
+	
+	beq $10, $0, proximaFase
+	# Vc Ganhou !!!!!!!!!!!!!!!!
+	jal telaYouWin
+	
+	proximaFase:
+		addi $25, $0, 1
+		sw $25, 0($8)  # Alterando a fase
+		j cenariosDoJogo
+	
+aindaNaoGanhou:
 	lw $8, 4($8)      # Conteudo do 4($8) (Posição)
 	
 	lw $22, 0($21)             # Lê o valor da tecla pressionada em $22 (endereço de teclas).
@@ -187,29 +337,33 @@ loopPrincipal:
 	addi $24, $0, 'w'          # Carrega 'w' no $24
 	beq $23, $24, cima
 	addi $24, $0, ' '         # Carrega espaço (' ') no $24
- 	beq $23, $24, salvarPosiçãoBombaPlayer   # Verifica se a tecla espaço foi pressionada
+ 	beq $23, $24, salvarPosicaoBombaPlayer   # Verifica se a tecla espaço foi pressionada
 	
 	j fimAtualizarPosicaoDoPlayer            # Volta ao início do loop
 	
-	salvarPosiçãoBombaPlayer:
+	salvarPosicaoBombaPlayer:
 		lui $9, 0x1002
-		jal salvarPosiçãoBomba
+		jal salvarPosicaoBomba
 		
 		j fimAtualizarPosicaoDoPlayer
 	
 	cima:
 		lui $9, 0x0000
-		ori $9, $9, 0x0000   # Iniciando com a cor Preta
+		ori $9, $9, 0x0000     # Iniciando com a cor Preta
 		lui $10, 0x0031
 		ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
+		li $11, 0xFF6600FF     # Roxo
+ 
 		
 		lw $25, -512($8)
 		beq $25, $9, fimAtualizarPosicaoDoPlayer
 		beq $25, $10, fimAtualizarPosicaoDoPlayer
+		beq $25, $11, fimAtualizarPosicaoDoPlayer
 		
 		lw $25, -480($8)
 		beq $25, $9, fimAtualizarPosicaoDoPlayer
 		beq $25, $10, fimAtualizarPosicaoDoPlayer
+		beq $25, $11, fimAtualizarPosicaoDoPlayer
 		
 		# Else:
 		addi $8, $8, -1024    # Movimentar para cima
@@ -222,14 +376,17 @@ loopPrincipal:
 		ori $9, $9, 0x0000   # Iniciando com a cor Preta
 		lui $10, 0x0031
 		ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
+		li $11, 0xFF6600FF     # Roxo
 		
 		lw $25, 4096($8)
 		beq $25, $9, fimAtualizarPosicaoDoPlayer
 		beq $25, $10, fimAtualizarPosicaoDoPlayer
+		beq $25, $11, fimAtualizarPosicaoDoPlayer
 		
 		lw $25, 4124($8)
 		beq $25, $9, fimAtualizarPosicaoDoPlayer
 		beq $25, $10, fimAtualizarPosicaoDoPlayer
+		beq $25, $11, fimAtualizarPosicaoDoPlayer
 		
 		# Else:
 		addi $8, $8, 1024    # Movimentar para baixo
@@ -242,14 +399,17 @@ loopPrincipal:
 		ori $9, $9, 0x0000   # Iniciando com a cor Preta
 		lui $10, 0x0031
 		ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
+		li $11, 0xFF6600FF     # Roxo
 		
 		lw $25, -4($8)
 		beq $25, $9, fimAtualizarPosicaoDoPlayer
 		beq $25, $10, fimAtualizarPosicaoDoPlayer
+		beq $25, $11, fimAtualizarPosicaoDoPlayer
 		
 		lw $25, -4($8)
 		beq $25, $9, fimAtualizarPosicaoDoPlayer
 		beq $25, $10, fimAtualizarPosicaoDoPlayer
+		beq $25, $11, fimAtualizarPosicaoDoPlayer
 		
 		# Else:
 		addi $8, $8, -8    # Movimentar para a esquerda
@@ -262,14 +422,17 @@ loopPrincipal:
 		ori $9, $9, 0x0000   # Iniciando com a cor Preta
 		lui $10, 0x0031
 		ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
+		li $11, 0xFF6600FF     # Roxo
 		
 		lw $25, 32($8)
 		beq $25, $9, fimAtualizarPosicaoDoPlayer
 		beq $25, $10, fimAtualizarPosicaoDoPlayer
+		beq $25, $11, fimAtualizarPosicaoDoPlayer
 		
 		lw $25, 3616($8)
 		beq $25, $9, fimAtualizarPosicaoDoPlayer
 		beq $25, $10, fimAtualizarPosicaoDoPlayer
+		beq $25, $11, fimAtualizarPosicaoDoPlayer
 		
 		# Else:
 		addi $8, $8, 8    # Movimentar para a direita
@@ -289,14 +452,14 @@ loopPrincipal:
 		
 	
 	lui $8, 0x1002    # Primeira posição do "array" para as variaveis
-	addi $8, $8, 4    # Coluna da posição
+	addi $8, $8, 4    # Ajustando para a coluna da posição
 	
 	
 	########################## Movimentação dos BOTs #############################
 	addi $24, $0, 3
 	
 	loopMovimentacaoBOTs: beq $24, $0, desenharTodosOsPersonagens
-		addi $8, $8, 512    #Pular bot ou player
+		addi $8, $8, 512    # Pular bot ou player
 		addi $24, $24, -1   # Atualiza a quantidade de personagens que faltam se movimentar (VIVOS)
 	
 		# Verificar se esta vivo
@@ -348,14 +511,17 @@ loopPrincipal:
 					ori $9, $9, 0x0000   # Iniciando com a cor Preta
 					lui $10, 0x0031
 					ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
+					li $12, 0xFF6600FF     # Roxo
 		
 					lw $25, -512($11)
 					beq $25, $9, gerarValor
 					beq $25, $10, gerarValor
+					beq $25, $12, gerarValor
 		
-					lw $25, -540($11)
+					lw $25, -480($11)
 					beq $25, $9, gerarValor
 					beq $25, $10, gerarValor
+					beq $25, $12, gerarValor
 		
 					# Else:
 					addi $11, $11, -1024    # Movimentar para cima
@@ -371,14 +537,17 @@ loopPrincipal:
 					ori $9, $9, 0x0000   # Iniciando com a cor Preta
 					lui $10, 0x0031
 					ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
+					li $12, 0xFF6600FF     # Roxo
 		
 					lw $25, 32($11)
 					beq $25, $9, gerarValor
 					beq $25, $10, gerarValor
+					beq $25, $12, gerarValor
 		
 					lw $25, 3616($11)
 					beq $25, $9, gerarValor
 					beq $25, $10, gerarValor
+					beq $25, $12, gerarValor
 		
 					# Else:
 					addi $11, $11, 8    # Movimentar para cima
@@ -394,14 +563,17 @@ loopPrincipal:
 					ori $9, $9, 0x0000   # Iniciando com a cor Preta
 					lui $10, 0x0031
 					ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
+					li $12, 0xFF6600FF     # Roxo
 		
-					lw $25, 4096($11)
+					lw $25, 4608($11)
 					beq $25, $9, gerarValor
 					beq $25, $10, gerarValor
+					beq $25, $12, gerarValor
 		
-					lw $25, 4124($11)
+					lw $25, 4636($11)
 					beq $25, $9, gerarValor
 					beq $25, $10, gerarValor
+					beq $25, $12, gerarValor
 		
 					# Else:
 					addi $11, $11, 1024    # Movimentar para cima
@@ -417,14 +589,17 @@ loopPrincipal:
 					ori $9, $9, 0x0000   # Iniciando com a cor Preta
 					lui $10, 0x0031
 					ori $10, $10, 0x3031   # Iniciando com a cor Cinza Escuro
+					li $12, 0xFF6600FF     # Roxo
 		
 					lw $25, -4($11)
 					beq $25, $9, gerarValor
 					beq $25, $10, gerarValor
+					beq $25, $12, gerarValor
 		
 					lw $25, 3580($11)
 					beq $25, $9, gerarValor
 					beq $25, $10, gerarValor
+					beq $25, $12, gerarValor
 		
 					# Else:
 					addi $11, $11, -8    # Movimentar para esquerda
@@ -451,6 +626,7 @@ loopPrincipal:
 		desenharPlayer:
 			lui $8, 0x1002    # Primeira posição do "array" para as variaveis
 			addi $8, $8, 4    # Coluna da posição
+			lw $10, -4($8)   # Vida
 			lw $8, 0($8)
 			lui $9, 0x0061       # Carrega 0x1001 nos 16 bits superiores de $8
 			ori $9, $9, 0xB4EC   # Adiciona 0x1020 aos 16 bits inferiores de $8
@@ -467,6 +643,7 @@ loopPrincipal:
 			beq $25, $0, desenharBotAmarelo
 			addi $8, $8, 4    # Coluna da posição
 			addi $8, $8, 512
+			lw $10, -4($8)   # Vida
 			lw $8, 0($8)
 			lui $9, 0x00FA       # Carrega 0x1001 nos 16 bits superiores de $8
 			ori $9, $9, 0x292A   # Adiciona 0x1020 aos 16 bits inferiores de $8
@@ -485,6 +662,7 @@ loopPrincipal:
 			addi $8, $8, 4    # Coluna da posição
 			addi $8, $8, 512
 			addi $8, $8, 512
+			lw $10, -4($8)   # Vida
 			lw $8, 0($8)
 			lui $9, 0x00F9       # Carrega 0x1001 nos 16 bits superiores de $8
 			ori $9, $9, 0xFE1D   # Adiciona 0x1020 aos 16 bits inferiores de $8
@@ -504,6 +682,7 @@ loopPrincipal:
 			addi $8, $8, 512
 			addi $8, $8, 512
 			addi $8, $8, 512
+			lw $10, -4($8)   # Vida
 			lw $8, 0($8)
 			lui $9, 0x00F7       # Carrega 0x1001 nos 16 bits superiores de $8
 			ori $9, $9, 0x72A5   # Adiciona 0x1020 aos 16 bits inferiores de $8
@@ -616,7 +795,7 @@ loopPrincipal:
 				
 			detectado:
 				add $9, $0, $23  # ecuperando valor do $9
-				jal salvarPosiçãoBomba
+				jal salvarPosicaoBomba
 					
 			reiniciarLoop:
 				add $9, $0, $23  # ecuperando valor do $9
@@ -687,8 +866,8 @@ fimVerificarInimigoSoltarBomba:
 			
 	fimLoopVerificarSePersonagemFoiAtingido:
 	
-	
 	j loopPrincipal
+	
 fim:
 	addi $2, $0, 10
 	syscall
@@ -771,6 +950,7 @@ copiaCenario:
 desenharPersonagem:
 	###### Lembrete: Ajustar a posição no $8 antes de chamar a função
 	###### Colocar a cor no $9 antes de chamar a função
+
 	
 	### Azul (Barriguinha e pezinhos)
 	# Barriguinha
@@ -831,7 +1011,39 @@ desenharPersonagem:
 	sw $9, 3080($8)
 	sw $9, 3092($8)
 	
-	jr $31
+	bne $10, $0, taVivo
+	# Se tiver morto
+	lui $9, 0x00FA
+	ori $9, $9, 0x292A   # Vermelho do sangue
+		# Buchinho
+		sw $9, 2052($8)
+		sw $9, 2564($8)
+		sw $9, 2572($8)
+		sw $9, 2064($8)
+		sw $9, 2576($8) 
+		sw $9, 2580($8)
+		
+		# Cabelo e olhos
+		ori $9, $9, 0x0004
+		sw $9, 8($8)
+		sw $9, 12($8)
+		sw $9, 20($8)
+		sw $9, 520($8)
+		
+		# Bracinho Esquerdo
+		sw $9, 2560($8)
+		# Bracinho Direito
+		sw $9, 2076($8)
+		
+		sw $9, 516($8)
+		sw $9, 524($8)
+		sw $9, 528($8)
+		sw $9, 532($8)
+		sw $9, 1040($8)
+		sw $9, 1544($8)
+		
+	taVivo:
+		jr $31
 	
 
 #####################################################################################
@@ -1434,7 +1646,7 @@ desenharBomba:
 # Saida: ---
 # $9: Sera o ponteiro para o array 
 
-salvarPosiçãoBomba:
+salvarPosicaoBomba:
 	posicaoBomba1:
 		lw $25, 24($9)
 		bne $25, $0, posicaoBomba2 # Verificar bomba 1, se ja tiver bomba ativa, verifica a segunda bomba
@@ -1442,18 +1654,18 @@ salvarPosiçãoBomba:
 			lw $25, 4($9)   # Pega a posição do personagem
 			sw $25, 24($9) # salvando a posição da bomba
 				
-			j fimSalvarPosiçãoBomba
+			j fimSalvarPosicaoBomba
 			
 	posicaoBomba2:
 		lw $25, 32($9)
-		bne $25, $0, fimSalvarPosiçãoBomba # Verificar bomba 2
+		bne $25, $0, fimSalvarPosicaoBomba # Verificar bomba 2
 		# Else: (se não tiver a bomba 2, coloca uma bomba)
 			lw $25, 4($9)   # Pega a posição do personagem
 			sw $25, 32($9) # salvando a posição da bomba
 				
-			j fimSalvarPosiçãoBomba
+			j fimSalvarPosicaoBomba
 		
-	fimSalvarPosiçãoBomba:
+	fimSalvarPosicaoBomba:
 		jr $31    # encerra a função
 
 
@@ -1581,3 +1793,571 @@ verificarSeFoiAtingidoPelaExplosao:
 	olhaComoEleTaDeBoa:
 		jr $31
 	
+#####################################################################################
+# Função que verifica se restou apenas o player vivi
+# Sujos: $10, $11, $12, $25
+# Saida: $12
+verificarVitoria:
+	lui $10, 0x1002
+	addi $11, $0, 3
+	addi $12, $0, 0  # Venceu??????? ( 0 = Ainda não)
+	
+	loopVerificarVitoria: beq $11, $0, estaoTodosMortos
+		addi $10, $10, 512
+		addi $11, $11, -1
+		
+		lw $25, 0($10)   # Pega a vida dos bots
+		bne $25, $0, fimVerificarVitoria  # Se ainda tiver bots vivos
+		
+	estaoTodosMortos:
+		addi $12, $0, 1   # Sim, o player ganhou
+		
+	fimVerificarVitoria:
+		jr $31
+		
+
+#####################################################################################
+# Função que desenha game over na tela
+
+telaGameOver:
+	lui $8 0x1001
+	li $9 0xFF5733
+	
+	addi $8 $8 20544
+	
+	lui $25 0x1002
+	sw $8 0($25)
+	
+	addi $10 $0 15
+	
+	loopVerticalG:
+	beq $10 $0 sairLoopVerticalG
+	sw $9 0($8)
+	addi $8 $8 512
+	addi $10 $10 -1
+	j loopVerticalG
+	
+	sairLoopVerticalG:
+		addi $10 $0 15
+		loopHorizontalGBaixo:
+			beq $10 $0 sairLoopHorizontalGBaixo
+			sw $9 0($8)
+			addi $8 $8 4
+			addi $10 $10 -1
+			j loopHorizontalGBaixo
+	
+	sairLoopHorizontalGBaixo:
+		
+	 	addi $10 $0 6
+		loopVerticalGBaixo:
+			beq $10 $0 sairLoopVerticalGBaixo
+			sw $9 0($8)
+			addi $8 $8 -512
+			addi $10 $10 -1
+			j loopVerticalGBaixo
+	
+	
+	sairLoopVerticalGBaixo:
+	
+	 	addi $10 $0 6
+		loophorizontalGMeio:
+			beq $10 $0 sairLoopHorizontalGMeio
+			sw $9 0($8)
+			addi $8 $8 -4
+			addi $10 $10 -1
+			j loophorizontalGMeio		
+	
+	
+	sairLoopHorizontalGMeio:
+		lui $8 0x1001
+		addi $8 $8 20544
+		addi $10 $0 15
+		loopHorizontalGCima:
+			beq $10 $0 sairLoopHorizontalGCima
+			sw $9 0($8)
+			addi $8 $8 4
+			addi $10 $10 -1
+			j loopHorizontalGCima
+			
+	sairLoopHorizontalGCima:
+		lui $8 0x1001
+		addi $8 $8 20640
+		addi $10 $0 16
+		loopVerticalA:
+			beq $10 $0 sairLoopVerticalA
+	 		sw $9 0($8)
+	 		addi $8 $8 512
+	 		addi $10 $10 -1
+	 		j loopVerticalA
+		
+		
+	sairLoopVerticalA:
+		lui $8 0x1001
+		addi $8 $8 20640
+		addi $10 $0 15
+		loopHorizontalACima:
+			beq $10 $0 sairLoopHorizontalACima
+	 		sw $9 0($8)
+	 		addi $8 $8 4
+	 		addi $10 $10 -1
+	 		j loopHorizontalACima
+		
+	sairLoopHorizontalACima:
+		addi $11 $8 0
+		addi $10 $0 16
+		loopVerticalADireita:
+			beq $10 $0 sairLoopVerticalADireita
+	 		sw $9 0($8)
+	 		addi $8 $8 512
+	 		addi $10 $10 -1
+	 		j loopVerticalADireita
+	 		
+	sairLoopVerticalADireita:
+		
+		lui $8 0x1001
+		addi $8 $8 24736
+		addi $10 $0 16
+		loopHorizontalAmeio:
+			beq $10 $0 sairLoopHorizontalAMeio
+	 		sw $9 0($8)
+	 		addi $8 $8 4
+	 		addi $10 $10 -1
+	 		j loopHorizontalAmeio
+	 		
+	 sairLoopHorizontalAMeio:
+	 	lui $8 0x1001
+		addi $8 $11 32 
+		addi $10 $0 16
+		loopVerticalM:
+			beq $10 $0 sairloopVerticalM
+	 		sw $9 0($8)
+	 		addi $8 $8 512
+	 		addi $10 $10 -1
+	 		j loopVerticalM
+	 		
+	 sairloopVerticalM:
+	 	lui $8 0x1001
+		addi $8 $11 32 
+		addi $10 $0 16
+		loopHorizontalM:
+			beq $10 $0 sairloopHorizontalM
+	 		sw $9 0($8)
+	 		addi $8 $8 4
+	 		addi $10 $10 -1
+	 		j loopHorizontalM
+	 		
+	 sairloopHorizontalM:
+	 	addi $12 $8 0
+		addi $10 $0 16
+		loopVerticalMDireita:
+			beq $10 $0 sairloopVerticalMDireita
+	 		sw $9 0($8)
+	 		addi $8 $8 512
+	 		addi $10 $10 -1
+	 		j loopVerticalMDireita
+	 		
+	 sairloopVerticalMDireita:
+	 	
+	 	lui $8 0x1001
+		addi $8 $11 64 
+		addi $10 $0 16
+		loopVerticalMMeio:
+			beq $10 $0 sairloopVerticalMMeio
+	 		sw $9 0($8)
+	 		addi $8 $8 512
+	 		addi $10 $10 -1
+	 		j loopVerticalMMeio
+	 		
+	 sairloopVerticalMMeio:
+		addi $8 $12 32 
+		addi $10 $0 16
+		loopVerticalE:
+			beq $10 $0 sairloopVerticalE
+	 		sw $9 0($8)
+	 		addi $8 $8 512
+	 		addi $10 $10 -1
+	 		j loopVerticalE
+	 		
+	 sairloopVerticalE:
+	 	addi $13 $8 0
+		addi $8 $12 32 
+		addi $10 $0 16
+		loopHorirzontalECima:
+			beq $10 $0 sairloopHorirzontalECima
+	 		sw $9 0($8)
+	 		addi $8 $8 4
+	 		addi $10 $10 -1
+	 		j loopHorirzontalECima
+	
+	sairloopHorirzontalECima:
+		addi $8 $12 4128
+		addi $10 $0 16
+		loopHorirzontalEMeio:
+			beq $10 $0 sairloopHorirzontalEMeio
+	 		sw $9 0($8)
+	 		addi $8 $8 4
+	 		addi $10 $10 -1
+	 		j loopHorirzontalEMeio
+	 		
+	 sairloopHorirzontalEMeio:
+		addi $8 $13 0
+		addi $10 $0 16
+		loopHorirzontalEBaixo:
+			beq $10 $0 sairloopHorirzontalEBaixo
+	 		sw $9 0($8)
+	 		addi $8 $8 4
+	 		addi $10 $10 -1
+	 		j loopHorirzontalEBaixo
+	 		
+	 sairloopHorirzontalEBaixo:
+	 
+	# come� Over
+		lw $8 0($25)
+		addi $8 $8 12288
+		sw $8 4($25)
+		addi $10 $0 16
+		loopVerticalOEsquerdo:
+			beq $10 $0 sairloopVerticalOEsquerdo
+	 		sw $9 0($8)
+	 		addi $8 $8 512
+	 		addi $10 $10 -1
+	 		j loopVerticalOEsquerdo	
+	 
+	 sairloopVerticalOEsquerdo:
+		addi $10 $0 16
+		loopHorirzontalOCima:
+			beq $10 $0 sairloopHorirzontalOCima
+	 		sw $9 0($8)
+	 		addi $8 $8 4
+	 		addi $10 $10 -1
+	 		j loopHorirzontalOCima		 
+	 	
+	 sairloopHorirzontalOCima:
+		addi $10 $0 16
+		loopHorirzontalOBaixo:
+			beq $10 $0 sairloopHorirzontalOBaixo
+	 		sw $9 0($8)
+	 		addi $8 $8 -512
+	 		addi $10 $10 -1
+	 		j loopHorirzontalOBaixo		 
+	 	
+	 sairloopHorirzontalOBaixo:
+		addi $10 $0 16
+		loopHorizontalOCima:
+			beq $10 $0 sairloopHorizontalOCima
+	 		sw $9 0($8)
+	 		addi $8 $8 -4
+	 		addi $10 $10 -1
+	 		j loopHorizontalOCima
+	 		
+	 sairloopHorizontalOCima:
+	 	lw $8 4($25)
+	 	addi $8 $8 96
+		addi $10 $0 16
+		loopVerticalVCima:
+			beq $10 $0 sairloopVerticalVCima
+	 		sw $9 0($8)
+	 		addi $8 $8 512
+	 		addi $10 $10 -1
+	 		j loopVerticalVCima
+	 		
+	 sairloopVerticalVCima:
+	 	 
+		addi $10 $0 16
+		loopVerticalVDireita:
+			beq $10 $0 sairloopVerticalVDireita
+	 		sw $9 0($8)
+	 		addi $8 $8 -508
+	 		addi $10 $10 -1
+	 		j loopVerticalVDireita
+	 		
+	 sairloopVerticalVDireita:
+
+	 	addi $8 $8 28
+		addi $10 $0 16
+		loopVerticalEOver:
+			beq $10 $0 sairloopVerticalEOver
+	 		sw $9 0($8)
+	 		addi $8 $8 512
+	 		addi $10 $10 -1
+	 		j loopVerticalEOver
+	 		
+	 sairloopVerticalEOver:
+	 	sw $8 8($25)
+		addi $10 $0 16
+		loopHorizontalEOverBaixo:
+			beq $10 $0 sairloopHorizontalEOverBaixo
+	 		sw $9 0($8)
+	 		addi $8 $8 4
+	 		addi $10 $10 -1
+	 		j loopHorizontalEOverBaixo
+	 		
+	 sairloopHorizontalEOverBaixo:
+	 	lw $8 8($25)
+	 	addi $8 $8 -4096
+		addi $10 $0 16
+		loopHorizontalEOverMeio:
+			beq $10 $0 sairloopHorizontalEOverMeio
+	 		sw $9 0($8)
+	 		addi $8 $8 4
+	 		addi $10 $10 -1
+	 		j loopHorizontalEOverMeio
+	 		
+	 sairloopHorizontalEOverMeio:
+	 	lw $8 8($25)
+	 	addi $8 $8 -8192
+		addi $10 $0 16
+		loopHorizontalEOverCima:
+			beq $10 $0 sairloopHorizontalEOverCima
+	 		sw $9 0($8)
+	 		addi $8 $8 4
+	 		addi $10 $10 -1
+	 		j loopHorizontalEOverCima
+	 		
+	 sairloopHorizontalEOverCima:
+	 	
+	 	addi $8 $8 32
+		sw $8 12($25)
+		addi $10 $0 18
+		loopVerticalROver:
+			beq $10 $0 sairloopVerticalROver
+	 		sw $9 0($8)
+	 		addi $8 $8 512
+	 		addi $10 $10 -1
+	 		j loopVerticalROver
+	 		
+	 sairloopVerticalROver:
+	 	
+		lw $8 12($25)
+		addi $10 $0 10
+		loopHorizontalROver:
+			beq $10 $0 sairloopHorizontalROver
+	 		sw $9 0($8)
+	 		addi $8 $8 4
+	 		addi $10 $10 -1
+	 		j loopHorizontalROver
+	 		
+	 sairloopHorizontalROver:
+		addi $10 $0 8
+		loopVerticalROverDireita:
+			beq $10 $0 sairloopVerticalROverDireita
+	 		sw $9 0($8)
+	 		addi $8 $8 512
+	 		addi $10 $10 -1
+	 		j loopVerticalROverDireita
+	 		
+	 sairloopVerticalROverDireita:
+		addi $10 $0 10
+		loopHorizontalROverVolta:
+			beq $10 $0 sairloopHorizontalROverVolta
+	 		sw $9 0($8)
+	 		addi $8 $8 -4
+	 		addi $10 $10 -1
+	 		j loopHorizontalROverVolta
+	 			 
+	 sairloopHorizontalROverVolta:
+		addi $10 $0 10
+		loopTortoROver:
+			beq $10 $0 sairloopTortoROver
+	 		sw $9 0($8)
+	 		addi $8 $8 516
+	 		addi $10 $10 -1
+	 		j loopTortoROver
+	 		
+	 sairloopTortoROver:
+	 	addi $2, $0, 10
+		syscall
+	 	jr $31
+	 	
+	 	
+#####################################################################################
+# Função que desenha you win na tela
+telaYouWin:
+		lui $8 0x1001
+	li $9 0x0000FF
+	
+	addi $8 $8 20608
+	lui $25 0x1002
+	sw $8 8($25)
+	
+	addi $10 $0 8
+	
+	loopVerticalYEsquerdo:
+		beq $10 $0 sairloopVerticalYEsquerdo
+		sw $9 0($8)
+		addi $8 $8 516
+		addi $10 $10 -1
+		j loopVerticalYEsquerdo
+		
+	sairloopVerticalYEsquerdo:
+		sw $8 0($25)
+		addi $10 $0 8
+		loopVerticalY:
+		beq $10 $0 sairloopVerticalY
+		sw $9 0($8)
+		addi $8 $8 512
+		addi $10 $10 -1
+		j loopVerticalY
+	
+	sairloopVerticalY:
+		lw $8 0($25)
+		addi $10 $0 8
+		loopVerticalYDireito:
+		beq $10 $0 sairloopVerticalYDireito
+		sw $9 0($8)
+		addi $8 $8 -508
+		addi $10 $10 -1
+		j loopVerticalYDireito
+		
+	sairloopVerticalYDireito:
+		
+		addi $8 $8 32
+		addi $10 $0 16
+				loopVerticalOEsquerdo_2:
+		beq $10 $0 sairloopVerticalOEsquerdo_2
+		sw $9 0($8)
+		addi $8 $8 512
+		addi $10 $10 -1
+		j loopVerticalOEsquerdo_2
+	
+	sairloopVerticalOEsquerdo_2:
+
+		addi $10 $0 16	
+		loopHorizontalOEsquerdo:
+		beq $10 $0 sairloopHorizontalOEsquerdo
+		sw $9 0($8)
+		addi $8 $8 4
+		addi $10 $10 -1
+		j loopHorizontalOEsquerdo
+	
+	sairloopHorizontalOEsquerdo:
+		addi $10 $0 16	
+		
+		loopVerticalODireito:
+		beq $10 $0 sairloopVerticalODireito
+		sw $9 0($8)
+		addi $8 $8 -512
+		addi $10 $10 -1
+		j loopVerticalODireito
+		
+	sairloopVerticalODireito:
+		sw $8 4($25)
+		addi $10 $0 16	
+		loopHorizontalOVolta:
+		beq $10 $0 sairloopHorizontalOVolta
+		sw $9 0($8)
+		addi $8 $8 -4
+		addi $10 $10 -1
+		j loopHorizontalOVolta
+		
+	sairloopHorizontalOVolta:
+		lw $8 4($25)
+		addi $8 $8 32
+		addi $10 $0 16
+		loopVerticalUEsquerdo:
+		beq $10 $0 sairloopVerticalUEsquerdo
+		sw $9 0($8)
+		addi $8 $8 512
+		addi $10 $10 -1
+		j loopVerticalUEsquerdo
+		
+	sairloopVerticalUEsquerdo:
+		
+		addi $10 $0 16
+		loopHU:
+		beq $10 $0 sairloopHU
+		sw $9 0($8)
+		addi $8 $8 4
+		addi $10 $10 -1
+		j loopHU
+		
+	sairloopHU:
+		addi $10 $0 16
+		loopVU:
+		beq $10 $0 sairloopVU
+		sw $9 0($8)
+		addi $8 $8 -512
+		addi $10 $10 -1
+		j loopVU
+		
+	sairloopVU:
+	# começo win
+		lw $8 8($25)
+		addi $8 $8 16384
+		addi $10 $0 8
+		loopEsqW:
+		beq $10 $0 sairloopEsqW
+		sw $9 0($8)
+		addi $8 $8 516
+		addi $10 $10 -1
+		j loopEsqW
+		
+	sairloopEsqW:
+		addi $10 $0 8
+		loop2W:
+		beq $10 $0 sairloop2W
+		sw $9 0($8)
+		addi $8 $8 -508
+		addi $10 $10 -1
+		j loop2W
+		
+	sairloop2W:
+		addi $10 $0 9
+		loop3W:
+		beq $10 $0 sairloop3W
+		sw $9 0($8)
+		addi $8 $8 516
+		addi $10 $10 -1
+		j loop3W
+		
+	sairloop3W:
+		addi $10 $0 8
+		loop4W:
+		beq $10 $0 sairloop4W
+		sw $9 0($8)
+		addi $8 $8 -508
+		addi $10 $10 -1
+		j loop4W
+		
+	sairloop4W:
+		addi $8 $8 32
+		addi $10 $0 16
+		loopI:
+		beq $10 $0 sairloopI
+		sw $9 0($8)
+		addi $8 $8 512
+		addi $10 $10 -1
+		j loopI
+		
+	sairloopI:
+		addi $8 $8 32
+		addi $10 $0 16
+		loopVN1:
+		beq $10 $0 sairloopVN1
+		sw $9 0($8)
+		addi $8 $8 -512
+		addi $10 $10 -1
+		j loopVN1
+		
+	sairloopVN1:
+		addi $10 $0 16
+		loopVN2:
+		beq $10 $0 sairloopVN2
+		sw $9 0($8)
+		addi $8 $8 516
+		addi $10 $10 -1
+		j loopVN2
+		
+	sairloopVN2:
+		addi $10 $0 16
+		loopVN3:
+		beq $10 $0 sairloopVN3
+		sw $9 0($8)
+		addi $8 $8 -512
+		addi $10 $10 -1
+		j loopVN3
+	
+	sairloopVN3:
+		addi $2, $0, 10
+		syscall
+	 	jr $31
