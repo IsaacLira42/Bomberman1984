@@ -1801,6 +1801,8 @@ verificarSeFoiAtingidoPelaExplosao:
 # Função que desenha game over na tela
 
 telaGameOver:
+	jal PintarDePreto
+	
 	lui $8 0x1001
 	li $9 0xFF5733
 	
@@ -2154,7 +2156,9 @@ telaGameOver:
 #####################################################################################
 # Função que desenha you win na tela
 telaYouWin:
-		lui $8 0x1001
+	jal PintarDePreto
+	
+	lui $8 0x1001
 	li $9 0x0000FF
 	
 	addi $8 $8 20608
@@ -2342,3 +2346,25 @@ telaYouWin:
 		addi $2, $0, 10
 		syscall
 	 	jr $31
+
+
+#####################################################################################
+# Função que coloca a posiç~o da bomba
+# Sujos: $9, $25
+# Saida: ---
+# $9: Contem a cor preta
+PintarDePreto:
+    lui $8, 0x1001        # Define a base do endereço
+    lui $9, 0x0000
+    ori $9, $9, 0x0000   # Iniciando com a cor Preta
+    li $10, 262144         # Define o número total de bytes a serem preenchidos
+
+loopPintarDePreto:
+    beq $10, $0, FimPintarPreto # Se chegou a 0, sai do loop
+    sw $9, 0($8)                # Armazena preto no endereço atual
+    addi $8, $8, 4              # Avança para o próximo endereço
+    addi $10, $10, -4           # Decrementa de 4 em 4 bytes
+    j loopPintarDePreto         # Volta para o início do loop
+
+FimPintarPreto:
+    jr $31                      # Retorna da função
