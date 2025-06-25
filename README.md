@@ -2,10 +2,14 @@
 
 Este projeto é uma recriação do clássico jogo **Bomberman (1984)**, desenvolvido em **Assembly MIPS** utilizando o simulador **MARS**. Criado por [**Isaac Lira**](https://github.com/IsaacLira42) e [**Lucas Vinícius**](https://github.com/viniciusgois711), o projeto une aprendizado e diversão ao resgatar elementos essenciais de um dos jogos mais marcantes da história dos videogames.
 
+## 🖼️ **Gameplay**
+
+![Gameplay](Modelos/Gameplay.png)
+
 ## 🎮 **Características do Jogo**
 
 * Estilo **retrô inspirado** no original de 1984.
-* 💣 **Explosões e estratégia**: posicione bombas para eliminar inimigos.
+* 💣 **Explosões e estratégia**: posicione bombas para abrir caminhos e eliminar inimigos.
 * 🕹️ **Controles simples**, via teclado.
 
 ## 🎯 **Objetivos do Jogador**
